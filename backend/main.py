@@ -3,6 +3,7 @@ from typing import Annotated
 
 import jwt
 from fastapi import Depends, FastAPI, HTTPException, status
+from fastapi.responses import StreamingResponse
 from fastapi.security import OAuth2PasswordBearer, OAuth2PasswordRequestForm
 from jwt.exceptions import InvalidTokenError
 from pydantic import BaseModel
@@ -171,6 +172,9 @@ async def read_user(
     return db_user
 
 
+ALGO_URL = os.getenv("ALGO_URL", "http://localhost:8003")
+
+
 @app.post("/chat", response_model=schemas.ChatResponse)
 async def chat(
         current_user: Annotated[schemas.User, Depends(get_current_active_user)],
@@ -187,10 +191,39 @@ async def chat(
     })
     return schemas.ChatResponse(response=resp.json()['choices'][0]['message']['content'])
 
+SYSTEM_PROMPT = (
+    "你是「学术论文搜索与推荐系统」的 AI 助手。本系统的功能：\n"
+    "1. 论文搜索 — 左侧菜单「论文搜索」，输入关键词进行语义搜索\n"
+    "2. 论文推荐 — 左侧菜单「论文推荐」，根据浏览历史推荐相关论文\n"
+    "3. 论文详情 — 点击搜索/推荐结果中的论文查看摘要，点击链接图标跳转 Google Scholar\n"
+    "4. AI 对话 — 即本页面，可以问学术问题或网站使用方法\n"
+    "论文库覆盖数据库、分布式系统、查询优化等 CS 领域。请用中文简洁回答。"
+)
+
+
+@app.post("/chat/stream")
+async def chat_stream(
+        current_user: Annotated[schemas.User, Depends(get_current_active_user)],
+        chat_request: schemas.ChatStreamRequest,
+):
+    messages = [{"role": "system", "content": SYSTEM_PROMPT}]
+    for m in chat_request.messages:
+        messages.append({"role": m.role, "content": m.content})
+
+    def generator():
+        with requests.post(
+            f"{ALGO_URL}/chat/stream/",
+            json={"messages": messages},
+            stream=True,
+            timeout=60,
+        ) as resp:
+            for raw_line in resp.iter_lines():
+                yield raw_line + b"\n"
+
+    return StreamingResponse(generator(), media_type="text/event-stream")
+
 
 # ---- Paper endpoints ----
-
-ALGO_URL = os.getenv("ALGO_URL", "http://localhost:8003")
 
 
 @app.get("/papers/", response_model=schemas.PaperList)

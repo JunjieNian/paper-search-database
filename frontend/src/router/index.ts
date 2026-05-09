@@ -83,4 +83,13 @@ const router = createRouter({
     routes
 });
 
+router.beforeEach((to, _from, next) => {
+    const token = localStorage.getItem('token')
+    if (to.path.startsWith('/index') && !token) {
+        next('/')
+    } else {
+        next()
+    }
+})
+
 export default router;

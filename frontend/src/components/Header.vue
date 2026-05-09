@@ -6,8 +6,7 @@ import {useUserstore} from "@/store/user";
 const router = useRouter()
 const userStore=useUserstore()
 async function logout() {
-  userStore.userName = 'userName'
-  userStore.token = 'token'
+  userStore.clearUser()
   ElMessage.success("登出成功")
   await router.push('/')
 }

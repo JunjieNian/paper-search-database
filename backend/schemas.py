@@ -36,6 +36,15 @@ class ChatResponse(BaseModel):
     response: str
 
 
+class ChatMessage(BaseModel):
+    role: str
+    content: str
+
+
+class ChatStreamRequest(BaseModel):
+    messages: List[ChatMessage]
+
+
 # ---- Paper schemas ----
 
 class PaperBase(BaseModel):

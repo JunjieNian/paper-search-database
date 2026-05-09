@@ -50,8 +50,7 @@ const submitForm = (formEl: FormInstance | undefined) => {
         })
         console.log(res)
         ElMessage.success('登陆成功')
-        userStore.token = res.access_token
-        userStore.userName=ruleForm.userName
+        userStore.setUser(ruleForm.userName, res.access_token)
         await router.push({ name: 'IndexMain', params: { userName: ruleForm.userName } });
       } catch (e) {
         console.log(e)

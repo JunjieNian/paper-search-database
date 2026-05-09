@@ -84,6 +84,55 @@ export const GetUserInfoList = (params: { skip: number, limit: number }): Promis
 export const ChatWithLLM = (data: LLMRequest): Promise<LLMResponse> =>
     instance.post(`/api/chat`, data);
 
+interface ChatMsg {
+    role: string
+    content: string
+}
+
+export async function ChatStream(
+    messages: ChatMsg[],
+    onChunk: (text: string) => void,
+    onDone: () => void,
+) {
+    const token = localStorage.getItem('token') || ''
+    const resp = await fetch('/api/chat/stream', {
+        method: 'POST',
+        headers: {
+            'Content-Type': 'application/json',
+            'Authorization': `Bearer ${token}`,
+        },
+        body: JSON.stringify({messages}),
+    })
+    if (!resp.ok) throw new Error(`HTTP ${resp.status}`)
+    const reader = resp.body!.getReader()
+    const decoder = new TextDecoder()
+    let buffer = ''
+    while (true) {
+        const {done, value} = await reader.read()
+        if (done) break
+        buffer += decoder.decode(value, {stream: true})
+        const lines = buffer.split('\n')
+        buffer = lines.pop()!
+        for (const line of lines) {
+            const trimmed = line.trim()
+            if (!trimmed) continue
+            if (trimmed.startsWith('data: ')) {
+                const data = trimmed.slice(6)
+                if (data === '[DONE]') {
+                    onDone()
+                    return
+                }
+                try {
+                    const parsed = JSON.parse(data)
+                    const content = parsed.choices?.[0]?.delta?.content
+                    if (content) onChunk(content)
+                } catch { /* skip non-JSON lines */ }
+            }
+        }
+    }
+    onDone()
+}
+
 // ---- Paper APIs ----
 
 interface PaperBrief {

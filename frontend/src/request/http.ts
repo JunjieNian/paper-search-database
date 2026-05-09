@@ -15,7 +15,7 @@ request.defaults.withCredentials = true;
 request.interceptors.request.use(
     request => {
         const userStore=useUserstore()
-        if (userStore.token !== 'token') {
+        if (userStore.token) {
             request.headers.Authorization = `Bearer ${userStore.token}`
         }
         return request

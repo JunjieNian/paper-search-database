@@ -5,9 +5,23 @@ export const useUserstore = defineStore(
     {
         state() {
             return {
-                userName:'userName',
-                token:'token',
+                userName: localStorage.getItem('userName') || '',
+                token: localStorage.getItem('token') || '',
             }
-        }
+        },
+        actions: {
+            setUser(userName: string, token: string) {
+                this.userName = userName
+                this.token = token
+                localStorage.setItem('userName', userName)
+                localStorage.setItem('token', token)
+            },
+            clearUser() {
+                this.userName = ''
+                this.token = ''
+                localStorage.removeItem('userName')
+                localStorage.removeItem('token')
+            },
+        },
     }
 )
