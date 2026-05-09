@@ -5,7 +5,9 @@ from pydantic import BaseModel
 
 class Message(BaseModel):
     role: str
-    content: str
+    content: Optional[str] = None
+    reasoning_content: Optional[str] = None
+    tool_calls: Optional[list] = None
 
 
 class Conversation(BaseModel):
@@ -16,12 +18,15 @@ class ConversationResponseUsage(BaseModel):
     prompt_tokens: int
     completion_tokens: int
     total_tokens: int
+    prompt_tokens_details: Optional[dict] = None
 
 
 class ConversationResponseChoice(BaseModel):
     index: int
     message: Message
-    finish_reason: Optional[str]
+    finish_reason: Optional[str] = None
+    logprobs: Optional[dict] = None
+    stop_reason: Optional[str] = None
 
 
 class ConversationResponse(BaseModel):
@@ -29,9 +34,10 @@ class ConversationResponse(BaseModel):
     object: str
     created: int
     model: str
-    system_fingerprint: str
+    system_fingerprint: Optional[str] = None
     choices: List[ConversationResponseChoice]
     usage: ConversationResponseUsage
+    prompt_logprobs: Optional[list] = None
 
 
 # ---- Search / Recommend / Index schemas ----

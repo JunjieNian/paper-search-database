@@ -6,7 +6,7 @@
     "venue": "VLDB",
     "year": 2023,
     "keywords": "query optimization, adaptive processing, analytical databases",
-    "url": ""
+    "url": "https://scholar.google.com/scholar?q=Adaptive+Query+Processing+in+Modern+Analytical+Databases"
   },
   {
     "title": "Learned Cost Models for Query Optimization: A Comprehensive Study",
@@ -15,7 +15,7 @@
     "venue": "SIGMOD",
     "year": 2022,
     "keywords": "learned optimization, cost model, deep learning, query planning",
-    "url": ""
+    "url": "https://scholar.google.com/scholar?q=Learned+Cost+Models+for+Query+Optimization%3A+A+Comprehensive+Study"
   },
   {
     "title": "Scalable Transaction Processing on Disaggregated Storage",
@@ -24,7 +24,7 @@
     "venue": "VLDB",
     "year": 2025,
     "keywords": "transaction processing, disaggregated storage, scalability, serializability",
-    "url": ""
+    "url": "https://scholar.google.com/scholar?q=Scalable+Transaction+Processing+on+Disaggregated+Storage"
   },
   {
     "title": "Graph Pattern Matching at Scale with Worst-Case Optimal Joins",
@@ -33,7 +33,7 @@
     "venue": "SIGMOD",
     "year": 2023,
     "keywords": "graph databases, pattern matching, worst-case optimal joins, distributed computing",
-    "url": ""
+    "url": "https://scholar.google.com/scholar?q=Graph+Pattern+Matching+at+Scale+with+Worst-Case+Optimal+Joins"
   },
   {
     "title": "Stream Processing with Exactly-Once Semantics under Failures",
@@ -42,7 +42,7 @@
     "venue": "ICDE",
     "year": 2021,
     "keywords": "stream processing, exactly-once, fault tolerance, checkpointing",
-    "url": ""
+    "url": "https://scholar.google.com/scholar?q=Stream+Processing+with+Exactly-Once+Semantics+under+Failures"
   },
   {
     "title": "The Case for Learned Index Structures Revisited",
@@ -51,7 +51,7 @@
     "venue": "SIGMOD",
     "year": 2020,
     "keywords": "learned indexes, B-tree, machine learning, index structures",
-    "url": ""
+    "url": "https://scholar.google.com/scholar?q=The+Case+for+Learned+Index+Structures+Revisited"
   },
   {
     "title": "Aurora: A Cloud-Native Relational Database Engine",
@@ -60,7 +60,7 @@
     "venue": "SIGMOD",
     "year": 2018,
     "keywords": "cloud databases, storage disaggregation, high availability, MySQL",
-    "url": ""
+    "url": "https://scholar.google.com/scholar?q=Aurora%3A+A+Cloud-Native+Relational+Database+Engine"
   },
   {
     "title": "CockroachDB: The Resilient Geo-Distributed SQL Database",
@@ -69,7 +69,7 @@
     "venue": "SIGMOD",
     "year": 2020,
     "keywords": "NewSQL, distributed databases, geo-distribution, consistency",
-    "url": ""
+    "url": "https://scholar.google.com/scholar?q=CockroachDB%3A+The+Resilient+Geo-Distributed+SQL+Database"
   },
   {
     "title": "HolisticClean: Holistic Data Cleaning with Probabilistic Inference",
@@ -78,7 +78,7 @@
     "venue": "VLDB",
     "year": 2017,
     "keywords": "data cleaning, probabilistic inference, data quality, integrity constraints",
-    "url": ""
+    "url": "https://scholar.google.com/scholar?q=HolisticClean%3A+Holistic+Data+Cleaning+with+Probabilistic+Inference"
   },
   {
     "title": "Approximate Query Processing for Interactive Analytics",
@@ -87,7 +87,7 @@
     "venue": "VLDB",
     "year": 2019,
     "keywords": "approximate query processing, sampling, interactive analytics, error bounds",
-    "url": ""
+    "url": "https://scholar.google.com/scholar?q=Approximate+Query+Processing+for+Interactive+Analytics"
   },
   {
     "title": "Differential Privacy in Database Systems: A Survey",
@@ -96,7 +96,7 @@
     "venue": "TODS",
     "year": 2021,
     "keywords": "differential privacy, database security, privacy-preserving analytics, survey",
-    "url": ""
+    "url": "https://scholar.google.com/scholar?q=Differential+Privacy+in+Database+Systems%3A+A+Survey"
   },
   {
     "title": "TimescaleDB: SQL Made Scalable for Time-Series Data",
@@ -105,7 +105,7 @@
     "venue": "SIGMOD",
     "year": 2020,
     "keywords": "time series, PostgreSQL, partitioning, IoT",
-    "url": ""
+    "url": "https://scholar.google.com/scholar?q=TimescaleDB%3A+SQL+Made+Scalable+for+Time-Series+Data"
   },
   {
     "title": "FAISS: A Library for Efficient Similarity Search and Clustering of Dense Vectors",
@@ -114,7 +114,7 @@
     "venue": "VLDB",
     "year": 2019,
     "keywords": "vector search, similarity search, nearest neighbor, GPU computing",
-    "url": ""
+    "url": "https://scholar.google.com/scholar?q=FAISS%3A+A+Library+for+Efficient+Similarity+Search+and+Clustering+of+Dense+Vectors"
   },
   {
     "title": "Snowflake: The Data Cloud Architecture",
@@ -123,7 +123,7 @@
     "venue": "SIGMOD",
     "year": 2016,
     "keywords": "data warehousing, cloud computing, OLAP, architecture",
-    "url": ""
+    "url": "https://scholar.google.com/scholar?q=Snowflake%3A+The+Data+Cloud+Architecture"
   },
   {
     "title": "LSM-Tree Compaction Strategies: A Systematic Evaluation",
@@ -132,7 +132,7 @@
     "venue": "SIGMOD",
     "year": 2017,
     "keywords": "LSM-tree, compaction, storage engines, write optimization",
-    "url": ""
+    "url": "https://scholar.google.com/scholar?q=LSM-Tree+Compaction+Strategies%3A+A+Systematic+Evaluation"
   },
   {
     "title": "Optimistic Concurrency Control Revisited for Modern Hardware",
@@ -141,7 +141,7 @@
     "venue": "VLDB",
     "year": 2015,
     "keywords": "concurrency control, OCC, hardware transactional memory, multi-core",
-    "url": ""
+    "url": "https://scholar.google.com/scholar?q=Optimistic+Concurrency+Control+Revisited+for+Modern+Hardware"
   },
   {
     "title": "SageDB: A Learned Database System",
@@ -150,7 +150,7 @@
     "venue": "CIDR",
     "year": 2019,
     "keywords": "learned databases, self-tuning, machine learning, specialization",
-    "url": ""
+    "url": "https://scholar.google.com/scholar?q=SageDB%3A+A+Learned+Database+System"
   },
   {
     "title": "Data Integration in the Age of Deep Learning",
@@ -159,7 +159,7 @@
     "venue": "VLDB",
     "year": 2021,
     "keywords": "data integration, deep learning, schema matching, entity resolution",
-    "url": ""
+    "url": "https://scholar.google.com/scholar?q=Data+Integration+in+the+Age+of+Deep+Learning"
   },
   {
     "title": "Bao: Making Learned Query Optimization Practical",
@@ -168,7 +168,7 @@
     "venue": "SIGMOD",
     "year": 2021,
     "keywords": "learned optimization, bandit learning, query planning, practical deployment",
-    "url": ""
+    "url": "https://scholar.google.com/scholar?q=Bao%3A+Making+Learned+Query+Optimization+Practical"
   },
   {
     "title": "FaunaDB: An Architectural Overview of a Globally Distributed Database",
@@ -177,7 +177,7 @@
     "venue": "ICDE",
     "year": 2020,
     "keywords": "distributed databases, global consistency, Calvin protocol, NoSQL",
-    "url": ""
+    "url": "https://scholar.google.com/scholar?q=FaunaDB%3A+An+Architectural+Overview+of+a+Globally+Distributed+Database"
   },
   {
     "title": "Progressive Sampling for Cardinality Estimation",
@@ -186,7 +186,7 @@
     "venue": "VLDB",
     "year": 2020,
     "keywords": "cardinality estimation, sampling, query optimization, statistics",
-    "url": ""
+    "url": "https://scholar.google.com/scholar?q=Progressive+Sampling+for+Cardinality+Estimation"
   },
   {
     "title": "HTAP Databases: What is Old is New Again",
@@ -195,7 +195,7 @@
     "venue": "ICDE",
     "year": 2022,
     "keywords": "HTAP, OLTP, OLAP, hybrid workloads",
-    "url": ""
+    "url": "https://scholar.google.com/scholar?q=HTAP+Databases%3A+What+is+Old+is+New+Again"
   },
   {
     "title": "Milvus: A Purpose-Built Vector Data Management System",
@@ -204,7 +204,7 @@
     "venue": "SIGMOD",
     "year": 2021,
     "keywords": "vector database, similarity search, embeddings, approximate nearest neighbor",
-    "url": ""
+    "url": "https://scholar.google.com/scholar?q=Milvus%3A+A+Purpose-Built+Vector+Data+Management+System"
   },
   {
     "title": "Efficiently Compiling Queries for Modern Hardware",
@@ -213,7 +213,7 @@
     "venue": "VLDB",
     "year": 2015,
     "keywords": "query compilation, code generation, LLVM, query processing",
-    "url": ""
+    "url": "https://scholar.google.com/scholar?q=Efficiently+Compiling+Queries+for+Modern+Hardware"
   },
   {
     "title": "Orca: A Modular Query Optimizer Architecture for Big Data",
@@ -222,7 +222,7 @@
     "venue": "SIGMOD",
     "year": 2017,
     "keywords": "query optimization, modular design, big data, Greenplum",
-    "url": ""
+    "url": "https://scholar.google.com/scholar?q=Orca%3A+A+Modular+Query+Optimizer+Architecture+for+Big+Data"
   },
   {
     "title": "Fast Serializable Multi-Version Concurrency Control for Main-Memory Databases",
@@ -231,7 +231,7 @@
     "venue": "SIGMOD",
     "year": 2015,
     "keywords": "MVCC, serializability, main-memory databases, concurrency control",
-    "url": ""
+    "url": "https://scholar.google.com/scholar?q=Fast+Serializable+Multi-Version+Concurrency+Control+for+Main-Memory+Databases"
   },
   {
     "title": "BlinkDB: Queries with Bounded Errors and Bounded Response Times on Very Large Data",
@@ -240,7 +240,7 @@
     "venue": "EuroSys",
     "year": 2016,
     "keywords": "approximate query processing, sampling, error bounds, response time",
-    "url": ""
+    "url": "https://scholar.google.com/scholar?q=BlinkDB%3A+Queries+with+Bounded+Errors+and+Bounded+Response+Times+on+Very+Large+Data"
   },
   {
     "title": "Spanner: Becoming a SQL System",
@@ -249,7 +249,7 @@
     "venue": "SIGMOD",
     "year": 2017,
     "keywords": "Spanner, SQL, distributed databases, Google",
-    "url": ""
+    "url": "https://scholar.google.com/scholar?q=Spanner%3A+Becoming+a+SQL+System"
   },
   {
     "title": "Towards a Unified Architecture for In-Database Machine Learning",
@@ -258,7 +258,7 @@
     "venue": "SIGMOD",
     "year": 2019,
     "keywords": "in-database ML, factorized learning, SQL, machine learning",
-    "url": ""
+    "url": "https://scholar.google.com/scholar?q=Towards+a+Unified+Architecture+for+In-Database+Machine+Learning"
   },
   {
     "title": "Napa: Powering Scalable Data Warehousing with Robust Query Performance at Google",
@@ -267,7 +267,7 @@
     "venue": "VLDB",
     "year": 2021,
     "keywords": "data warehousing, scalability, materialized views, physical design",
-    "url": ""
+    "url": "https://scholar.google.com/scholar?q=Napa%3A+Powering+Scalable+Data+Warehousing+with+Robust+Query+Performance+at+Google"
   },
   {
     "title": "Neo: A Learned Query Optimizer",
@@ -276,7 +276,7 @@
     "venue": "VLDB",
     "year": 2019,
     "keywords": "learned optimization, reinforcement learning, neural networks, query planning",
-    "url": ""
+    "url": "https://scholar.google.com/scholar?q=Neo%3A+A+Learned+Query+Optimizer"
   },
   {
     "title": "Columnar Storage Optimization for Analytical Workloads",
@@ -285,7 +285,7 @@
     "venue": "ICDE",
     "year": 2022,
     "keywords": "columnar storage, compression, encoding, OLAP",
-    "url": ""
+    "url": "https://scholar.google.com/scholar?q=Columnar+Storage+Optimization+for+Analytical+Workloads"
   },
   {
     "title": "Secure Multi-Party Database Queries Using Garbled Circuits",
@@ -294,7 +294,7 @@
     "venue": "VLDB",
     "year": 2018,
     "keywords": "secure computation, privacy, garbled circuits, federated queries",
-    "url": ""
+    "url": "https://scholar.google.com/scholar?q=Secure+Multi-Party+Database+Queries+Using+Garbled+Circuits"
   },
   {
     "title": "InfluxDB: Time Series Database for Metrics and Events",
@@ -303,7 +303,7 @@
     "venue": "ICDE",
     "year": 2019,
     "keywords": "time series, storage engine, metrics, IoT",
-    "url": ""
+    "url": "https://scholar.google.com/scholar?q=InfluxDB%3A+Time+Series+Database+for+Metrics+and+Events"
   },
   {
     "title": "Pinot: Realtime OLAP for 530 Million Users",
@@ -312,7 +312,7 @@
     "venue": "SIGMOD",
     "year": 2018,
     "keywords": "OLAP, real-time analytics, distributed systems, LinkedIn",
-    "url": ""
+    "url": "https://scholar.google.com/scholar?q=Pinot%3A+Realtime+OLAP+for+530+Million+Users"
   },
   {
     "title": "MonetDB/X100: Hyper-Pipelining Query Execution",
@@ -321,7 +321,7 @@
     "venue": "VLDB",
     "year": 2015,
     "keywords": "vectorized execution, CPU optimization, pipelining, OLAP",
-    "url": ""
+    "url": "https://scholar.google.com/scholar?q=MonetDB%2FX100%3A+Hyper-Pipelining+Query+Execution"
   },
   {
     "title": "Taming Model-Based Query Optimization with Bayesian Techniques",
@@ -330,7 +330,7 @@
     "venue": "VLDB",
     "year": 2022,
     "keywords": "Bayesian optimization, query planning, uncertainty, robustness",
-    "url": ""
+    "url": "https://scholar.google.com/scholar?q=Taming+Model-Based+Query+Optimization+with+Bayesian+Techniques"
   },
   {
     "title": "A Survey on Graph Neural Networks for Knowledge Graph Completion",
@@ -339,7 +339,7 @@
     "venue": "VLDB",
     "year": 2022,
     "keywords": "knowledge graphs, graph neural networks, link prediction, survey",
-    "url": ""
+    "url": "https://scholar.google.com/scholar?q=A+Survey+on+Graph+Neural+Networks+for+Knowledge+Graph+Completion"
   },
   {
     "title": "Lakehouse: A New Generation of Open Platforms that Unify Data Warehousing and Advanced Analytics",
@@ -348,7 +348,7 @@
     "venue": "CIDR",
     "year": 2021,
     "keywords": "lakehouse, data lake, data warehouse, Delta Lake",
-    "url": ""
+    "url": "https://scholar.google.com/scholar?q=Lakehouse%3A+A+New+Generation+of+Open+Platforms+that+Unify+Data+Warehousing+and+Advanced+Analytics"
   },
   {
     "title": "Robust Estimation of Transition Matrices in High-Dimensional Streaming Data",
@@ -357,7 +357,7 @@
     "venue": "PODS",
     "year": 2020,
     "keywords": "streaming algorithms, sketching, transition matrices, sublinear space",
-    "url": ""
+    "url": "https://scholar.google.com/scholar?q=Robust+Estimation+of+Transition+Matrices+in+High-Dimensional+Streaming+Data"
   },
   {
     "title": "Predicate Pushdown for Data Lake Analytics",
@@ -366,7 +366,7 @@
     "venue": "ICDE",
     "year": 2023,
     "keywords": "predicate pushdown, data lakes, query optimization, cloud storage",
-    "url": ""
+    "url": "https://scholar.google.com/scholar?q=Predicate+Pushdown+for+Data+Lake+Analytics"
   },
   {
     "title": "Taurus: Lightweight Parallel Logging for In-Memory Databases",
@@ -375,7 +375,7 @@
     "venue": "SIGMOD",
     "year": 2020,
     "keywords": "write-ahead logging, in-memory databases, parallelism, recovery",
-    "url": ""
+    "url": "https://scholar.google.com/scholar?q=Taurus%3A+Lightweight+Parallel+Logging+for+In-Memory+Databases"
   },
   {
     "title": "ALEX: An Updatable Adaptive Learned Index",
@@ -384,7 +384,7 @@
     "venue": "SIGMOD",
     "year": 2020,
     "keywords": "learned index, B-tree, adaptive, updatable",
-    "url": ""
+    "url": "https://scholar.google.com/scholar?q=ALEX%3A+An+Updatable+Adaptive+Learned+Index"
   },
   {
     "title": "Polaris: Enabling Transaction Processing in Large-Scale Analytics Systems",
@@ -393,7 +393,7 @@
     "venue": "VLDB",
     "year": 2022,
     "keywords": "transactions, analytics, ACID, snapshot isolation",
-    "url": ""
+    "url": "https://scholar.google.com/scholar?q=Polaris%3A+Enabling+Transaction+Processing+in+Large-Scale+Analytics+Systems"
   },
   {
     "title": "Distributed Graph Analytics with Pregel: An Evaluation",
@@ -402,7 +402,7 @@
     "venue": "ICDE",
     "year": 2018,
     "keywords": "graph analytics, Pregel, distributed computing, evaluation",
-    "url": ""
+    "url": "https://scholar.google.com/scholar?q=Distributed+Graph+Analytics+with+Pregel%3A+An+Evaluation"
   },
   {
     "title": "Qd-tree: Learning Data Layouts for Big Data Analytics",
@@ -411,7 +411,7 @@
     "venue": "SIGMOD",
     "year": 2020,
     "keywords": "data layout, partitioning, learned optimization, analytics",
-    "url": ""
+    "url": "https://scholar.google.com/scholar?q=Qd-tree%3A+Learning+Data+Layouts+for+Big+Data+Analytics"
   },
   {
     "title": "Schema Evolution in Heterogeneous Data Lakes",
@@ -420,7 +420,7 @@
     "venue": "ICDE",
     "year": 2021,
     "keywords": "schema evolution, data lakes, data integration, heterogeneous data",
-    "url": ""
+    "url": "https://scholar.google.com/scholar?q=Schema+Evolution+in+Heterogeneous+Data+Lakes"
   },
   {
     "title": "Umbra: A Disk-Based System with In-Memory Performance",
@@ -429,7 +429,7 @@
     "venue": "VLDB",
     "year": 2020,
     "keywords": "buffer management, query compilation, disk-based, performance",
-    "url": ""
+    "url": "https://scholar.google.com/scholar?q=Umbra%3A+A+Disk-Based+System+with+In-Memory+Performance"
   },
   {
     "title": "Privacy-Preserving Record Linkage Using Bloom Filters",
@@ -438,7 +438,7 @@
     "venue": "VLDB",
     "year": 2016,
     "keywords": "privacy, record linkage, Bloom filters, encryption",
-    "url": ""
+    "url": "https://scholar.google.com/scholar?q=Privacy-Preserving+Record+Linkage+Using+Bloom+Filters"
   },
   {
     "title": "Auto-WLM: Machine Learning for Workload Management in Cloud Databases",
@@ -447,7 +447,7 @@
     "venue": "ICDE",
     "year": 2023,
     "keywords": "workload management, machine learning, cloud databases, scheduling",
-    "url": ""
+    "url": "https://scholar.google.com/scholar?q=Auto-WLM%3A+Machine+Learning+for+Workload+Management+in+Cloud+Databases"
   },
   {
     "title": "Dependency-Aware Query Processing in Distributed Databases",
@@ -456,7 +456,7 @@
     "venue": "VLDB",
     "year": 2016,
     "keywords": "distributed query processing, data shuffling, partitioning, network optimization",
-    "url": ""
+    "url": "https://scholar.google.com/scholar?q=Dependency-Aware+Query+Processing+in+Distributed+Databases"
   },
   {
     "title": "Deep Reinforcement Learning for Join Order Optimization",
@@ -465,7 +465,7 @@
     "venue": "SIGMOD",
     "year": 2018,
     "keywords": "join ordering, reinforcement learning, query optimization, deep learning",
-    "url": ""
+    "url": "https://scholar.google.com/scholar?q=Deep+Reinforcement+Learning+for+Join+Order+Optimization"
   },
   {
     "title": "Document Stores vs. Relational Databases: A Comparative Study",
@@ -474,7 +474,7 @@
     "venue": "ICDE",
     "year": 2019,
     "keywords": "NoSQL, document stores, MongoDB, comparison",
-    "url": ""
+    "url": "https://scholar.google.com/scholar?q=Document+Stores+vs.+Relational+Databases%3A+A+Comparative+Study"
   },
   {
     "title": "Persistent Memory and Database Systems: A Survey",
@@ -483,7 +483,7 @@
     "venue": "TODS",
     "year": 2021,
     "keywords": "persistent memory, NVM, database architecture, survey",
-    "url": ""
+    "url": "https://scholar.google.com/scholar?q=Persistent+Memory+and+Database+Systems%3A+A+Survey"
   },
   {
     "title": "Erasing Data from Trained Machine Learning Models in Databases",
@@ -492,7 +492,7 @@
     "venue": "SIGMOD",
     "year": 2023,
     "keywords": "data deletion, GDPR, machine learning, machine unlearning",
-    "url": ""
+    "url": "https://scholar.google.com/scholar?q=Erasing+Data+from+Trained+Machine+Learning+Models+in+Databases"
   },
   {
     "title": "Scalable and Adaptive Graph Pattern Mining",
@@ -501,7 +501,7 @@
     "venue": "VLDB",
     "year": 2023,
     "keywords": "graph mining, pattern mining, sampling, scalability",
-    "url": ""
+    "url": "https://scholar.google.com/scholar?q=Scalable+and+Adaptive+Graph+Pattern+Mining"
   },
   {
     "title": "End-to-End Learned Cardinality Estimation with Transformers",
@@ -510,7 +510,7 @@
     "venue": "VLDB",
     "year": 2025,
     "keywords": "cardinality estimation, transformers, deep learning, query optimization",
-    "url": ""
+    "url": "https://scholar.google.com/scholar?q=End-to-End+Learned+Cardinality+Estimation+with+Transformers"
   },
   {
     "title": "Multi-Tenant Database Management for Cloud Services",
@@ -519,7 +519,7 @@
     "venue": "SIGMOD",
     "year": 2018,
     "keywords": "multi-tenancy, cloud databases, resource management, SLA",
-    "url": ""
+    "url": "https://scholar.google.com/scholar?q=Multi-Tenant+Database+Management+for+Cloud+Services"
   },
   {
     "title": "Self-Driving Database Management Systems",
@@ -528,7 +528,7 @@
     "venue": "CIDR",
     "year": 2019,
     "keywords": "autonomous databases, self-tuning, machine learning, NoisePage",
-    "url": ""
+    "url": "https://scholar.google.com/scholar?q=Self-Driving+Database+Management+Systems"
   },
   {
     "title": "Vectorized Query Execution on ARM Processors",
@@ -537,7 +537,7 @@
     "venue": "VLDB",
     "year": 2023,
     "keywords": "vectorized execution, ARM, SIMD, energy efficiency",
-    "url": ""
+    "url": "https://scholar.google.com/scholar?q=Vectorized+Query+Execution+on+ARM+Processors"
   },
   {
     "title": "Detecting and Resolving Conflicts in Data Cleaning Pipelines",
@@ -546,7 +546,7 @@
     "venue": "SIGMOD",
     "year": 2017,
     "keywords": "data cleaning, conflict resolution, integrity constraints, data quality",
-    "url": ""
+    "url": "https://scholar.google.com/scholar?q=Detecting+and+Resolving+Conflicts+in+Data+Cleaning+Pipelines"
   },
   {
     "title": "Query Processing on Encrypted Databases: Techniques and Challenges",
@@ -555,7 +555,7 @@
     "venue": "TODS",
     "year": 2020,
     "keywords": "encrypted databases, query processing, security, homomorphic encryption",
-    "url": ""
+    "url": "https://scholar.google.com/scholar?q=Query+Processing+on+Encrypted+Databases%3A+Techniques+and+Challenges"
   },
   {
     "title": "Tsunami: A Learned Multi-dimensional Index for Correlated Data",
@@ -564,7 +564,7 @@
     "venue": "VLDB",
     "year": 2021,
     "keywords": "multi-dimensional index, learned index, correlations, spatial queries",
-    "url": ""
+    "url": "https://scholar.google.com/scholar?q=Tsunami%3A+A+Learned+Multi-dimensional+Index+for+Correlated+Data"
   },
   {
     "title": "Greenplum: A Hybrid Database for Transactional and Analytical Workloads",
@@ -573,7 +573,7 @@
     "venue": "ICDE",
     "year": 2021,
     "keywords": "Greenplum, MPP, hybrid workloads, parallel processing",
-    "url": ""
+    "url": "https://scholar.google.com/scholar?q=Greenplum%3A+A+Hybrid+Database+for+Transactional+and+Analytical+Workloads"
   },
   {
     "title": "Buffer Pool Aware Query Optimization",
@@ -582,7 +582,7 @@
     "venue": "SIGMOD",
     "year": 2016,
     "keywords": "buffer pool, query optimization, cost estimation, caching",
-    "url": ""
+    "url": "https://scholar.google.com/scholar?q=Buffer+Pool+Aware+Query+Optimization"
   },
   {
     "title": "Real-Time Machine Learning on Streaming Data with Feature Stores",
@@ -591,7 +591,7 @@
     "venue": "VLDB",
     "year": 2023,
     "keywords": "feature stores, streaming, machine learning, real-time",
-    "url": ""
+    "url": "https://scholar.google.com/scholar?q=Real-Time+Machine+Learning+on+Streaming+Data+with+Feature+Stores"
   },
   {
     "title": "Optimal Column Layout for Hybrid Workloads",
@@ -600,7 +600,7 @@
     "venue": "ICDE",
     "year": 2019,
     "keywords": "column layout, HTAP, storage optimization, hybrid workloads",
-    "url": ""
+    "url": "https://scholar.google.com/scholar?q=Optimal+Column+Layout+for+Hybrid+Workloads"
   },
   {
     "title": "AsterixDB: A Scalable, Open Source BDMS",
@@ -609,7 +609,7 @@
     "venue": "VLDB",
     "year": 2015,
     "keywords": "big data, BDMS, indexing, data management",
-    "url": ""
+    "url": "https://scholar.google.com/scholar?q=AsterixDB%3A+A+Scalable%2C+Open+Source+BDMS"
   },
   {
     "title": "Towards Neural Network-Based Query Execution",
@@ -618,7 +618,7 @@
     "venue": "SIGMOD",
     "year": 2022,
     "keywords": "neural networks, query execution, learned operators, approximation",
-    "url": ""
+    "url": "https://scholar.google.com/scholar?q=Towards+Neural+Network-Based+Query+Execution"
   },
   {
     "title": "Efficient Temporal Graph Analytics with Columnar Storage",
@@ -627,7 +627,7 @@
     "venue": "VLDB",
     "year": 2025,
     "keywords": "temporal graphs, columnar storage, graph analytics, time-evolving",
-    "url": ""
+    "url": "https://scholar.google.com/scholar?q=Efficient+Temporal+Graph+Analytics+with+Columnar+Storage"
   },
   {
     "title": "Cost-Based Query Optimization for Serverless Databases",
@@ -636,7 +636,7 @@
     "venue": "SIGMOD",
     "year": 2024,
     "keywords": "serverless, query optimization, cost model, multi-objective",
-    "url": ""
+    "url": "https://scholar.google.com/scholar?q=Cost-Based+Query+Optimization+for+Serverless+Databases"
   },
   {
     "title": "RocksDB: Evolution of Development Priorities in a Key-Value Store Serving Large-Scale Applications",
@@ -645,7 +645,7 @@
     "venue": "TODS",
     "year": 2021,
     "keywords": "RocksDB, key-value store, LSM-tree, Facebook",
-    "url": ""
+    "url": "https://scholar.google.com/scholar?q=RocksDB%3A+Evolution+of+Development+Priorities+in+a+Key-Value+Store+Serving+Large-Scale+Applications"
   },
   {
     "title": "Automatic Physical Database Design: A Survey",
@@ -654,7 +654,7 @@
     "venue": "TODS",
     "year": 2022,
     "keywords": "physical design, index selection, automation, survey",
-    "url": ""
+    "url": "https://scholar.google.com/scholar?q=Automatic+Physical+Database+Design%3A+A+Survey"
   },
   {
     "title": "DuckDB: An Embeddable Analytical Database",
@@ -663,7 +663,7 @@
     "venue": "SIGMOD",
     "year": 2019,
     "keywords": "embedded database, OLAP, vectorized execution, in-process",
-    "url": ""
+    "url": "https://scholar.google.com/scholar?q=DuckDB%3A+An+Embeddable+Analytical+Database"
   },
   {
     "title": "Incremental View Maintenance for Complex Analytical Queries",
@@ -672,7 +672,7 @@
     "venue": "VLDB",
     "year": 2018,
     "keywords": "materialized views, incremental maintenance, OLAP, complex queries",
-    "url": ""
+    "url": "https://scholar.google.com/scholar?q=Incremental+View+Maintenance+for+Complex+Analytical+Queries"
   },
   {
     "title": "Entity Resolution with Hierarchical Graph Attention Networks",
@@ -681,7 +681,7 @@
     "venue": "ICDE",
     "year": 2022,
     "keywords": "entity resolution, graph attention networks, record matching, deep learning",
-    "url": ""
+    "url": "https://scholar.google.com/scholar?q=Entity+Resolution+with+Hierarchical+Graph+Attention+Networks"
   },
   {
     "title": "Shared-Nothing vs. Shared-Disk Architectures in Cloud Databases",
@@ -690,7 +690,7 @@
     "venue": "VLDB",
     "year": 2022,
     "keywords": "cloud databases, shared-nothing, shared-disk, architecture comparison",
-    "url": ""
+    "url": "https://scholar.google.com/scholar?q=Shared-Nothing+vs.+Shared-Disk+Architectures+in+Cloud+Databases"
   },
   {
     "title": "Continuously Adaptive Indexing",
@@ -699,7 +699,7 @@
     "venue": "VLDB",
     "year": 2016,
     "keywords": "adaptive indexing, database cracking, self-tuning, index construction",
-    "url": ""
+    "url": "https://scholar.google.com/scholar?q=Continuously+Adaptive+Indexing"
   },
   {
     "title": "Vertica-ML: Distributed Machine Learning in a Column-Oriented Database",
@@ -708,7 +708,7 @@
     "venue": "SIGMOD",
     "year": 2020,
     "keywords": "in-database ML, Vertica, distributed learning, SQL extensions",
-    "url": ""
+    "url": "https://scholar.google.com/scholar?q=Vertica-ML%3A+Distributed+Machine+Learning+in+a+Column-Oriented+Database"
   },
   {
     "title": "Compression-Aware Query Processing in Column Stores",
@@ -717,7 +717,7 @@
     "venue": "VLDB",
     "year": 2017,
     "keywords": "compression, column stores, query processing, performance",
-    "url": ""
+    "url": "https://scholar.google.com/scholar?q=Compression-Aware+Query+Processing+in+Column+Stores"
   },
   {
     "title": "NoisePage: The Self-Driving Database Management System",
@@ -726,7 +726,7 @@
     "venue": "VLDB",
     "year": 2021,
     "keywords": "self-driving database, autonomous, workload forecasting, NoisePage",
-    "url": ""
+    "url": "https://scholar.google.com/scholar?q=NoisePage%3A+The+Self-Driving+Database+Management+System"
   },
   {
     "title": "Handling Data Skew in Distributed Hash Joins",
@@ -735,7 +735,7 @@
     "venue": "SIGMOD",
     "year": 2015,
     "keywords": "hash join, data skew, distributed processing, load balancing",
-    "url": ""
+    "url": "https://scholar.google.com/scholar?q=Handling+Data+Skew+in+Distributed+Hash+Joins"
   },
   {
     "title": "LeanStore: In-Memory Data Management Beyond Main Memory",
@@ -744,7 +744,7 @@
     "venue": "ICDE",
     "year": 2018,
     "keywords": "buffer management, in-memory, pointer swizzling, performance",
-    "url": ""
+    "url": "https://scholar.google.com/scholar?q=LeanStore%3A+In-Memory+Data+Management+Beyond+Main+Memory"
   },
   {
     "title": "Autonomous Anomaly Detection for Database Systems",
@@ -753,7 +753,7 @@
     "venue": "ICDE",
     "year": 2022,
     "keywords": "anomaly detection, monitoring, time series, autonomous",
-    "url": ""
+    "url": "https://scholar.google.com/scholar?q=Autonomous+Anomaly+Detection+for+Database+Systems"
   },
   {
     "title": "Parallel OLAP Query Processing on GPUs",
@@ -762,7 +762,7 @@
     "venue": "VLDB",
     "year": 2018,
     "keywords": "GPU, OLAP, parallel processing, query acceleration",
-    "url": ""
+    "url": "https://scholar.google.com/scholar?q=Parallel+OLAP+Query+Processing+on+GPUs"
   },
   {
     "title": "Access Path Selection in a Relational Database Management System Revisited",
@@ -771,7 +771,7 @@
     "venue": "VLDB",
     "year": 2015,
     "keywords": "access path selection, cost model, modern hardware, query optimization",
-    "url": ""
+    "url": "https://scholar.google.com/scholar?q=Access+Path+Selection+in+a+Relational+Database+Management+System+Revisited"
   },
   {
     "title": "Consistent Hashing with Bounded Loads for Distributed Database Partitioning",
@@ -780,7 +780,7 @@
     "venue": "PODS",
     "year": 2018,
     "keywords": "consistent hashing, partitioning, load balancing, distributed databases",
-    "url": ""
+    "url": "https://scholar.google.com/scholar?q=Consistent+Hashing+with+Bounded+Loads+for+Distributed+Database+Partitioning"
   },
   {
     "title": "Learned Bloom Filters for Membership Testing",
@@ -789,7 +789,7 @@
     "venue": "SIGMOD",
     "year": 2019,
     "keywords": "Bloom filters, learned data structures, LSM-tree, membership testing",
-    "url": ""
+    "url": "https://scholar.google.com/scholar?q=Learned+Bloom+Filters+for+Membership+Testing"
   },
   {
     "title": "Data Provenance in Large-Scale Data Processing Pipelines",
@@ -798,7 +798,7 @@
     "venue": "VLDB",
     "year": 2020,
     "keywords": "data provenance, lineage, Spark, auditing",
-    "url": ""
+    "url": "https://scholar.google.com/scholar?q=Data+Provenance+in+Large-Scale+Data+Processing+Pipelines"
   },
   {
     "title": "Wander Join: Online Aggregation via Random Walks",
@@ -807,7 +807,7 @@
     "venue": "SIGMOD",
     "year": 2016,
     "keywords": "online aggregation, random walks, join queries, sampling",
-    "url": ""
+    "url": "https://scholar.google.com/scholar?q=Wander+Join%3A+Online+Aggregation+via+Random+Walks"
   },
   {
     "title": "The Unifying Theory of Data Cleaning",
@@ -816,7 +816,7 @@
     "venue": "PODS",
     "year": 2019,
     "keywords": "data cleaning, theory, constraint satisfaction, data quality",
-    "url": ""
+    "url": "https://scholar.google.com/scholar?q=The+Unifying+Theory+of+Data+Cleaning"
   },
   {
     "title": "Modernizing Spatial Database Engines for GPU-Accelerated Processing",
@@ -825,7 +825,7 @@
     "venue": "SIGMOD",
     "year": 2020,
     "keywords": "spatial databases, GPU, geometric queries, acceleration",
-    "url": ""
+    "url": "https://scholar.google.com/scholar?q=Modernizing+Spatial+Database+Engines+for+GPU-Accelerated+Processing"
   },
   {
     "title": "Automatic SQL Query Rewriting with Graph Neural Networks",
@@ -834,7 +834,7 @@
     "venue": "VLDB",
     "year": 2024,
     "keywords": "query rewriting, graph neural networks, optimization, automation",
-    "url": ""
+    "url": "https://scholar.google.com/scholar?q=Automatic+SQL+Query+Rewriting+with+Graph+Neural+Networks"
   },
   {
     "title": "Federated Database Systems: A Decade Later",
@@ -843,7 +843,7 @@
     "venue": "ICDE",
     "year": 2021,
     "keywords": "federated databases, data federation, heterogeneous sources, cloud",
-    "url": ""
+    "url": "https://scholar.google.com/scholar?q=Federated+Database+Systems%3A+A+Decade+Later"
   },
   {
     "title": "Write-Optimized B-Trees for High-Throughput Ingestion",
@@ -852,7 +852,7 @@
     "venue": "PODS",
     "year": 2017,
     "keywords": "B-tree, write optimization, ingestion, data structures",
-    "url": ""
+    "url": "https://scholar.google.com/scholar?q=Write-Optimized+B-Trees+for+High-Throughput+Ingestion"
   },
   {
     "title": "Embedding Databases in Machine Learning Pipelines",
@@ -861,7 +861,7 @@
     "venue": "SIGMOD",
     "year": 2023,
     "keywords": "ML pipelines, database integration, joint optimization, training",
-    "url": ""
+    "url": "https://scholar.google.com/scholar?q=Embedding+Databases+in+Machine+Learning+Pipelines"
   },
   {
     "title": "Ceph Distributed Storage for Large-Scale Database Deployments",
@@ -870,7 +870,7 @@
     "venue": "ICDE",
     "year": 2017,
     "keywords": "distributed storage, Ceph, performance tuning, transactional workloads",
-    "url": ""
+    "url": "https://scholar.google.com/scholar?q=Ceph+Distributed+Storage+for+Large-Scale+Database+Deployments"
   },
   {
     "title": "Robust Query-Driven Cardinality Estimation under Shifting Workloads",
@@ -879,7 +879,7 @@
     "venue": "VLDB",
     "year": 2023,
     "keywords": "cardinality estimation, workload shift, robustness, online learning",
-    "url": ""
+    "url": "https://scholar.google.com/scholar?q=Robust+Query-Driven+Cardinality+Estimation+under+Shifting+Workloads"
   },
   {
     "title": "Concurrent B-Tree Operations with Lock-Free Techniques",
@@ -888,7 +888,7 @@
     "venue": "SIGMOD",
     "year": 2018,
     "keywords": "B-tree, lock-free, concurrency, multi-core",
-    "url": ""
+    "url": "https://scholar.google.com/scholar?q=Concurrent+B-Tree+Operations+with+Lock-Free+Techniques"
   },
   {
     "title": "Heterogeneous Memory Management for Database Systems",
@@ -897,7 +897,7 @@
     "venue": "VLDB",
     "year": 2024,
     "keywords": "heterogeneous memory, CXL, tiered storage, data placement",
-    "url": ""
+    "url": "https://scholar.google.com/scholar?q=Heterogeneous+Memory+Management+for+Database+Systems"
   },
   {
     "title": "Automatic Index Tuning: A Survey and Experimental Evaluation",
@@ -906,7 +906,7 @@
     "venue": "VLDB",
     "year": 2023,
     "keywords": "index tuning, automatic tuning, experimental evaluation, survey",
-    "url": ""
+    "url": "https://scholar.google.com/scholar?q=Automatic+Index+Tuning%3A+A+Survey+and+Experimental+Evaluation"
   },
   {
     "title": "Vector Similarity Search with HNSW Graphs at Scale",
@@ -915,7 +915,7 @@
     "venue": "VLDB",
     "year": 2020,
     "keywords": "HNSW, vector search, nearest neighbor, graph-based index",
-    "url": ""
+    "url": "https://scholar.google.com/scholar?q=Vector+Similarity+Search+with+HNSW+Graphs+at+Scale"
   },
   {
     "title": "Query Optimization in Heterogeneous Computing Environments",
@@ -924,7 +924,7 @@
     "venue": "SIGMOD",
     "year": 2016,
     "keywords": "heterogeneous computing, GPU, FPGA, query optimization",
-    "url": ""
+    "url": "https://scholar.google.com/scholar?q=Query+Optimization+in+Heterogeneous+Computing+Environments"
   },
   {
     "title": "TiDB: A Raft-Based HTAP Database",
@@ -933,7 +933,7 @@
     "venue": "VLDB",
     "year": 2020,
     "keywords": "TiDB, HTAP, Raft, distributed database",
-    "url": ""
+    "url": "https://scholar.google.com/scholar?q=TiDB%3A+A+Raft-Based+HTAP+Database"
   },
   {
     "title": "Functional Dependencies Discovery: An Experimental Evaluation",
@@ -942,7 +942,7 @@
     "venue": "VLDB",
     "year": 2015,
     "keywords": "functional dependencies, data profiling, schema normalization, experimental evaluation",
-    "url": ""
+    "url": "https://scholar.google.com/scholar?q=Functional+Dependencies+Discovery%3A+An+Experimental+Evaluation"
   },
   {
     "title": "SQL-on-Hadoop: Full Circle Back to Shared-Nothing Database Architectures",
@@ -951,7 +951,7 @@
     "venue": "VLDB",
     "year": 2016,
     "keywords": "SQL-on-Hadoop, shared-nothing, MPP, analytical processing",
-    "url": ""
+    "url": "https://scholar.google.com/scholar?q=SQL-on-Hadoop%3A+Full+Circle+Back+to+Shared-Nothing+Database+Architectures"
   },
   {
     "title": "Learned Query Scheduling for Multi-Tenant Database Systems",
@@ -960,7 +960,7 @@
     "venue": "SIGMOD",
     "year": 2024,
     "keywords": "query scheduling, multi-tenant, reinforcement learning, latency",
-    "url": ""
+    "url": "https://scholar.google.com/scholar?q=Learned+Query+Scheduling+for+Multi-Tenant+Database+Systems"
   },
   {
     "title": "Resilient Data Processing with Lineage-Driven Fault Tolerance",
@@ -969,7 +969,7 @@
     "venue": "PODS",
     "year": 2017,
     "keywords": "fault tolerance, lineage, data provenance, resilience",
-    "url": ""
+    "url": "https://scholar.google.com/scholar?q=Resilient+Data+Processing+with+Lineage-Driven+Fault+Tolerance"
   },
   {
     "title": "Real-Time Analytics with Change Data Capture",
@@ -978,7 +978,7 @@
     "venue": "ICDE",
     "year": 2020,
     "keywords": "change data capture, real-time analytics, streaming, schema evolution",
-    "url": ""
+    "url": "https://scholar.google.com/scholar?q=Real-Time+Analytics+with+Change+Data+Capture"
   },
   {
     "title": "TabTransformer: Tabular Data Modeling Using Contextual Embeddings",
@@ -987,7 +987,7 @@
     "venue": "VLDB",
     "year": 2021,
     "keywords": "transformers, tabular data, embeddings, deep learning",
-    "url": ""
+    "url": "https://scholar.google.com/scholar?q=TabTransformer%3A+Tabular+Data+Modeling+Using+Contextual+Embeddings"
   },
   {
     "title": "Efficiently Processing Temporal Range Queries in Time Series Databases",
@@ -996,7 +996,7 @@
     "venue": "ICDE",
     "year": 2023,
     "keywords": "time series, range queries, temporal indexing, multi-resolution",
-    "url": ""
+    "url": "https://scholar.google.com/scholar?q=Efficiently+Processing+Temporal+Range+Queries+in+Time+Series+Databases"
   },
   {
     "title": "Disaggregated Memory for Database Buffer Pools",
@@ -1005,7 +1005,7 @@
     "venue": "SIGMOD",
     "year": 2024,
     "keywords": "memory disaggregation, buffer pool, RDMA, CXL",
-    "url": ""
+    "url": "https://scholar.google.com/scholar?q=Disaggregated+Memory+for+Database+Buffer+Pools"
   },
   {
     "title": "Generating Natural Language Explanations for Query Results",
@@ -1014,7 +1014,7 @@
     "venue": "SIGMOD",
     "year": 2022,
     "keywords": "natural language, query explanation, provenance, usability",
-    "url": ""
+    "url": "https://scholar.google.com/scholar?q=Generating+Natural+Language+Explanations+for+Query+Results"
   },
   {
     "title": "Fair Query Processing: Ensuring Non-Discrimination in Database Systems",
@@ -1023,7 +1023,7 @@
     "venue": "PODS",
     "year": 2021,
     "keywords": "fairness, non-discrimination, responsible data management, ethics",
-    "url": ""
+    "url": "https://scholar.google.com/scholar?q=Fair+Query+Processing%3A+Ensuring+Non-Discrimination+in+Database+Systems"
   },
   {
     "title": "Efficient Window Aggregate Processing with Segment Trees",
@@ -1032,7 +1032,7 @@
     "venue": "VLDB",
     "year": 2015,
     "keywords": "window functions, aggregation, segment trees, analytical queries",
-    "url": ""
+    "url": "https://scholar.google.com/scholar?q=Efficient+Window+Aggregate+Processing+with+Segment+Trees"
   },
   {
     "title": "Database-Integrated Analytics with Python UDFs",
@@ -1041,7 +1041,7 @@
     "venue": "SIGMOD",
     "year": 2023,
     "keywords": "Python UDF, code generation, analytics, PostgreSQL",
-    "url": ""
+    "url": "https://scholar.google.com/scholar?q=Database-Integrated+Analytics+with+Python+UDFs"
   },
   {
     "title": "Data Version Control for Machine Learning Experiments",
@@ -1050,7 +1050,7 @@
     "venue": "ICDE",
     "year": 2021,
     "keywords": "data versioning, ML experiments, reproducibility, version control",
-    "url": ""
+    "url": "https://scholar.google.com/scholar?q=Data+Version+Control+for+Machine+Learning+Experiments"
   },
   {
     "title": "Range Filters: A Lightweight Alternative to Bloom Filters for Range Queries",
@@ -1059,7 +1059,7 @@
     "venue": "SIGMOD",
     "year": 2022,
     "keywords": "range filters, Bloom filters, LSM-tree, range queries",
-    "url": ""
+    "url": "https://scholar.google.com/scholar?q=Range+Filters%3A+A+Lightweight+Alternative+to+Bloom+Filters+for+Range+Queries"
   },
   {
     "title": "Elastic Resource Management for Cloud Database Clusters",
@@ -1068,7 +1068,7 @@
     "venue": "VLDB",
     "year": 2023,
     "keywords": "elastic scaling, resource management, cloud databases, workload prediction",
-    "url": ""
+    "url": "https://scholar.google.com/scholar?q=Elastic+Resource+Management+for+Cloud+Database+Clusters"
   },
   {
     "title": "Quantum Computing for Database Operations: Opportunities and Challenges",
@@ -1077,6 +1077,6 @@
     "venue": "VLDB",
     "year": 2024,
     "keywords": "quantum computing, database operations, quantum algorithms, future directions",
-    "url": ""
+    "url": "https://scholar.google.com/scholar?q=Quantum+Computing+for+Database+Operations%3A+Opportunities+and+Challenges"
   }
 ]

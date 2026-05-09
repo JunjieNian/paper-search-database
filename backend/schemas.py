@@ -67,6 +67,7 @@ class PaperBrief(BaseModel):
     venue: str
     year: int
     keywords: str
+    url: str = ""
 
     class Config:
         from_attributes = True

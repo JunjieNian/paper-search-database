@@ -1,14 +1,8 @@
-# 阿里云 DashScope API 统一配置
-# 文档：https://help.aliyun.com/zh/model-studio/
+import os
 
-DASHSCOPE_API_KEY = "sk-YOUR_API_KEY_HERE"  # TODO: 替换为你的阿里云 API Key
-DASHSCOPE_BASE_URL = "https://dashscope.aliyuncs.com/compatible-mode/v1"
+# vLLM 本地模型服务配置
+# 启动 vLLM 的命令见 README.md
 
-# LLM 对话模型
-LLM_MODEL = "qwen-plus"
-
-# 文本向量化模型
-EMBEDDING_MODEL = "text-embedding-v3"
-
-# 文本重排序模型
-RERANK_MODEL = "gte-rerank"
+VLLM_BASE_URL = os.getenv("VLLM_BASE_URL", "http://localhost:11434/v1")
+VLLM_API_KEY = os.getenv("VLLM_API_KEY", "vllm")
+LLM_MODEL = os.getenv("LLM_MODEL", "qwen2.5-3b")

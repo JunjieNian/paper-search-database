@@ -1,14 +1,16 @@
+import os
+
 from sqlalchemy import create_engine
 from sqlalchemy.orm import declarative_base, sessionmaker
 from sqlalchemy.engine import URL
 
 SQLALCHEMY_DATABASE_URL = URL.create(
     "mysql+pymysql",
-    username="root",
-    password="Njj20060901!@#",
-    host="127.0.0.1",
-    port=3306,
-    database="test",
+    username=os.getenv("MYSQL_USER", "root"),
+    password=os.getenv("MYSQL_PASSWORD", ""),
+    host=os.getenv("MYSQL_HOST", "127.0.0.1"),
+    port=int(os.getenv("MYSQL_PORT", "3306")),
+    database=os.getenv("MYSQL_DATABASE", "test"),
     query={"charset": "utf8mb4"},
 )
 

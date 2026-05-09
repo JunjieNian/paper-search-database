@@ -13,6 +13,7 @@ import crud, models, schemas
 from database import SessionLocal, engine
 from security import verify_password
 
+import os
 import requests
 
 
@@ -176,7 +177,7 @@ async def chat(
         chat_request: schemas.ChatRequest
 ):
     # print(current_user.username)
-    resp = requests.post('http://localhost:8001/chat', json={
+    resp = requests.post(f'{ALGO_URL}/chat', json={
         'messages': [
             {
                 'role': 'user',
@@ -189,7 +190,7 @@ async def chat(
 
 # ---- Paper endpoints ----
 
-ALGO_URL = "http://localhost:8001"
+ALGO_URL = os.getenv("ALGO_URL", "http://localhost:8003")
 
 
 @app.get("/papers/", response_model=schemas.PaperList)

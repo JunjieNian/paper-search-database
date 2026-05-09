@@ -93,6 +93,7 @@ interface PaperBrief {
     venue: string
     year: number
     keywords: string
+    url: string
 }
 
 interface PaperDetail {

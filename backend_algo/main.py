@@ -4,15 +4,14 @@ import schemas
 import requests
 import numpy as np
 import vector_store
-import reranker
-from config import DASHSCOPE_BASE_URL, DASHSCOPE_API_KEY, LLM_MODEL
+from config import VLLM_BASE_URL, VLLM_API_KEY, LLM_MODEL
 
 
 app = FastAPI()
 
 
 HEADERS = {
-    "Authorization": f"Bearer {DASHSCOPE_API_KEY}",
+    "Authorization": f"Bearer {VLLM_API_KEY}",
     "Content-Type": "application/json",
 }
 
@@ -21,7 +20,7 @@ HEADERS = {
 async def chat_stream(conversation: schemas.Conversation):
 
     def generator():
-        with requests.post(f'{DASHSCOPE_BASE_URL}/chat/completions', json={
+        with requests.post(f'{VLLM_BASE_URL}/chat/completions', json={
             'model': LLM_MODEL,
             'stream': True,
             'messages': [m.model_dump() for m in conversation.messages],
@@ -38,7 +37,6 @@ async def chat_stream(conversation: schemas.Conversation):
                 else:
                     yield raw_line + b'\n'
                     break
-                # print(json.loads(line))
                 yield raw_line + b'\n'
 
     return StreamingResponse(generator())
@@ -46,7 +44,7 @@ async def chat_stream(conversation: schemas.Conversation):
 
 @app.post("/chat/", response_model=schemas.ConversationResponse)
 async def chat(conversation: schemas.Conversation):
-    resp = requests.post(f'{DASHSCOPE_BASE_URL}/chat/completions', json={
+    resp = requests.post(f'{VLLM_BASE_URL}/chat/completions', json={
         'model': LLM_MODEL,
         'stream': False,
         'messages': [m.model_dump() for m in conversation.messages],
@@ -56,22 +54,17 @@ async def chat(conversation: schemas.Conversation):
 
 @app.post("/search", response_model=schemas.SearchResponse)
 async def search(req: schemas.SearchRequest):
-    """两阶段检索：ChromaDB 召回 → BGE-Reranker 精排"""
-    # 阶段1：向量召回
-    ids, documents = vector_store.search(req.query, top_k=req.top_k)
+    """向量检索：ChromaDB 召回，用距离计算相关性分数"""
+    ids, documents, distances = vector_store.search(req.query, top_k=req.top_k)
     if not ids:
         return schemas.SearchResponse(results=[])
 
-    # 阶段2：精排
-    rerank_results = reranker.rerank(req.query, documents, top_n=len(documents))
-
     results = []
-    for r in rerank_results:
-        idx = r["index"]
-        paper_id = int(ids[idx])
-        score = r.get("relevance_score", 0.0)
-        results.append(schemas.SearchResult(paper_id=paper_id, score=score))
+    for pid, dist in zip(ids, distances):
+        score = 1.0 / (1.0 + dist)
+        results.append(schemas.SearchResult(paper_id=int(pid), score=score))
 
+    results.sort(key=lambda x: x.score, reverse=True)
     return schemas.SearchResponse(results=results)
 
 
@@ -85,7 +78,7 @@ async def recommend(req: schemas.RecommendRequest):
 
     # 获取已点击论文的 embedding
     embeddings = vector_store.get_embeddings_by_ids(clicked_str_ids)
-    if not embeddings:
+    if embeddings is None or len(embeddings) == 0:
         return schemas.RecommendResponse(paper_ids=[])
 
     # 计算质心

@@ -3,6 +3,7 @@ import { ref, onMounted } from 'vue'
 import { useRouter } from 'vue-router'
 import { GetRecommendations, RecordClick } from '@/request/api'
 import { ElMessage } from 'element-plus'
+import { Link } from '@element-plus/icons-vue'
 
 const router = useRouter()
 
@@ -66,6 +67,20 @@ onMounted(() => {
         <el-table-column prop="venue" label="会议/期刊" width="120" />
         <el-table-column prop="year" label="年份" width="80" />
         <el-table-column prop="keywords" label="关键词" min-width="200" show-overflow-tooltip />
+        <el-table-column label="链接" width="70" align="center">
+          <template #default="{ row }">
+            <a
+              v-if="row.url"
+              :href="row.url"
+              target="_blank"
+              rel="noopener"
+              @click.stop
+              class="paper-link"
+            >
+              <el-icon :size="18"><Link /></el-icon>
+            </a>
+          </template>
+        </el-table-column>
       </el-table>
     </div>
   </div>
@@ -91,5 +106,14 @@ onMounted(() => {
 
 .clickable-table :deep(tbody tr:hover) {
   color: #409eff;
+}
+
+.paper-link {
+  color: #409eff;
+  transition: color 0.2s;
+}
+
+.paper-link:hover {
+  color: #66b1ff;
 }
 </style>

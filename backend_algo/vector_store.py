@@ -1,16 +1,12 @@
 import chromadb
-import chromadb.utils.embedding_functions as embedding_functions
-from config import DASHSCOPE_BASE_URL, DASHSCOPE_API_KEY, EMBEDDING_MODEL
+from chromadb.utils.embedding_functions import DefaultEmbeddingFunction
 
 CHROMA_HOST = "localhost"
 CHROMA_PORT = 8002
 COLLECTION_NAME = "papers"
 
-openai_ef = embedding_functions.OpenAIEmbeddingFunction(
-    api_key=DASHSCOPE_API_KEY,
-    api_base=DASHSCOPE_BASE_URL,
-    model_name=EMBEDDING_MODEL,
-)
+# ChromaDB 内置 all-MiniLM-L6-v2 (384维)，适合英文 CS/AI 论文
+default_ef = DefaultEmbeddingFunction()
 
 client = chromadb.HttpClient(host=CHROMA_HOST, port=CHROMA_PORT)
 
@@ -18,7 +14,7 @@ client = chromadb.HttpClient(host=CHROMA_HOST, port=CHROMA_PORT)
 def get_collection():
     return client.get_or_create_collection(
         name=COLLECTION_NAME,
-        embedding_function=openai_ef,
+        embedding_function=default_ef,
     )
 
 
@@ -37,12 +33,17 @@ def index_papers(papers: list[dict]):
 
 
 def search(query: str, top_k: int = 20):
-    """向量检索，返回 paper id 列表和对应文档。"""
+    """向量检索，返回 paper id 列表、文档和距离。"""
     collection = get_collection()
-    results = collection.query(query_texts=[query], n_results=top_k)
+    results = collection.query(
+        query_texts=[query],
+        n_results=top_k,
+        include=["documents", "distances"],
+    )
     ids = results["ids"][0] if results["ids"] else []
     documents = results["documents"][0] if results["documents"] else []
-    return ids, documents
+    distances = results["distances"][0] if results["distances"] else []
+    return ids, documents, distances
 
 
 def get_embeddings_by_ids(paper_ids: list[str]):

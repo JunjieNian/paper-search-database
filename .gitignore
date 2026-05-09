@@ -1,3 +1,10 @@
+# ChromaDB data
+chroma_data/
+
+# Python
+__pycache__/
+*.pyc
+
 # Logs
 logs
 *.log
