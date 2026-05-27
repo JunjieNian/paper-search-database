@@ -437,6 +437,8 @@ Token 有效期: 30 分钟 | 签名算法: HS256
 | `EMBEDDING_MODEL` | `text-embedding-v4` | Embedding 模型名 |
 | `EMBEDDING_DIMENSIONS` | `1024` | Embedding 维度 |
 | `EMBEDDING_BATCH_SIZE` | `10` | 单批最多 10 条文本 |
+| `CHROMA_CLIENT_MODE` | `persistent` | `persistent` 本地持久化；`http` 连接独立 Chroma 服务 |
+| `CHROMA_PERSIST_DIR` | `./chroma_data` | 本地持久化目录 |
 
 ---
 
@@ -474,17 +476,19 @@ cp frontend/.env.development.example frontend/.env.development.local
 
 如需继续使用本地 vLLM，可在 `backend_algo/.env` 中覆盖 `VLLM_BASE_URL`、`VLLM_API_KEY` 和 `LLM_MODEL`。
 
-### 2. 启动 ChromaDB
+### 2. 准备本地向量库
 
-```bash
-pip install chromadb
-chroma run --host localhost --port 8002 --path ./chroma_data
-```
+默认使用 Chroma 的本地持久化模式，不需要单独启动 `chroma run`。
 
 从本地 `all-MiniLM-L6-v2` 切到 `text-embedding-v4` 后，需要先删除旧向量索引再重建：
 
 ```bash
 rm -rf ./chroma_data
+```
+
+如果你确实要连接独立 Chroma 服务，再把 `backend_algo/.env` 里的 `CHROMA_CLIENT_MODE` 改成 `http`，并单独启动：
+
+```bash
 chroma run --host localhost --port 8002 --path ./chroma_data
 ```
 
@@ -887,10 +891,15 @@ CREATE DATABASE test CHARACTER SET utf8mb4;
 mysql -u root -p
 ```
 
-### 5. 重建 Chroma 向量库
+### 5. 重建本地向量库
 
 ```powershell
 Remove-Item -Recurse -Force .\chroma_data -ErrorAction SilentlyContinue
+```
+
+默认不需要启动 `chroma run`。只有当你把 `backend_algo/.env` 里的 `CHROMA_CLIENT_MODE=http` 时，才需要：
+
+```powershell
 chroma run --host localhost --port 8002 --path .\chroma_data
 ```
 
@@ -943,4 +952,5 @@ npm run dev -- --host 0.0.0.0
 - 如果 `seed_papers.py` 报算法层连接失败，先确认 `backend_algo` 已经启动在 `http://localhost:8003`。
 - 如果聊天报错，先确认 `backend_algo/.env` 里的 `DASHSCOPE_API_KEY` 正确。
 - 如果搜索报向量维度不匹配，删除 `chroma_data/` 后重新执行第 5 步和第 8 步。
+- 如果 `backend_algo` 启动时报 Chroma 502，把 `backend_algo/.env` 里的 `CHROMA_CLIENT_MODE` 保持为 `persistent`，不要再启动 `chroma run`。
 

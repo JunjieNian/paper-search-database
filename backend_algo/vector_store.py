@@ -1,8 +1,12 @@
+from pathlib import Path
+
 import chromadb
 from openai import OpenAI
 
 from config import (
+    CHROMA_CLIENT_MODE,
     CHROMA_HOST,
+    CHROMA_PERSIST_DIR,
     CHROMA_PORT,
     COLLECTION_NAME,
     EMBEDDING_API_KEY,
@@ -12,11 +16,11 @@ from config import (
     EMBEDDING_MODEL,
 )
 
-client = chromadb.HttpClient(host=CHROMA_HOST, port=CHROMA_PORT)
 embedding_client = OpenAI(
     api_key=EMBEDDING_API_KEY or "missing-api-key",
     base_url=EMBEDDING_BASE_URL,
 )
+_client = None
 
 
 def _ensure_embedding_api_key():
@@ -42,6 +46,33 @@ def build_document(paper: dict) -> str:
     return ". ".join(part for part in parts if part)
 
 
+def get_client():
+    global _client
+    if _client is not None:
+        return _client
+
+    if CHROMA_CLIENT_MODE == "persistent":
+        persist_dir = Path(CHROMA_PERSIST_DIR)
+        persist_dir.mkdir(parents=True, exist_ok=True)
+        _client = chromadb.PersistentClient(path=str(persist_dir))
+        return _client
+
+    if CHROMA_CLIENT_MODE == "http":
+        try:
+            _client = chromadb.HttpClient(host=CHROMA_HOST, port=CHROMA_PORT)
+            return _client
+        except Exception as exc:
+            raise RuntimeError(
+                "连接 Chroma HTTP 服务失败。"
+                f"请确认 http://{CHROMA_HOST}:{CHROMA_PORT} 已启动，"
+                "或把 backend_algo/.env 里的 CHROMA_CLIENT_MODE 改成 persistent。"
+            ) from exc
+
+    raise RuntimeError(
+        f"不支持的 CHROMA_CLIENT_MODE={CHROMA_CLIENT_MODE!r}，可选值: persistent / http"
+    )
+
+
 def embed_texts(texts: list[str]) -> list[list[float]]:
     """调用 DashScope/OpenAI 兼容 Embedding 接口。"""
     if not texts:
@@ -65,6 +96,7 @@ def embed_texts(texts: list[str]) -> list[list[float]]:
 
 
 def get_collection():
+    client = get_client()
     try:
         return client.get_collection(name=COLLECTION_NAME)
     except Exception:
