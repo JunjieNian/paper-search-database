@@ -1,2 +1,7 @@
 __pycache__
 data_vector_db
+.env
+*.swp
+*.swo
+chroma.sqlite3
+[0-9a-f-]*/

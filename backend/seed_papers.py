@@ -1,5 +1,5 @@
 """
-种子脚本：读取 papers.json → 写入 MySQL → 调用算法层 /index 索引到 ChromaDB
+种子脚本：读取真实来源的 papers.json（OpenAlex 生成）→ 写入 MySQL → 调用算法层 /index 索引到 ChromaDB
 用法: cd backend && python seed_papers.py
 """
 import json

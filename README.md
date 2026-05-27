@@ -129,7 +129,7 @@ erDiagram
         varchar(256) venue "发表会议/期刊"
         int year "发表年份"
         varchar(512) keywords "关键词"
-        varchar(512) url "Google Scholar 链接"
+        varchar(512) url "论文来源链接（DOI / 出版方 / OpenAlex）"
         datetime created_at "入库时间 (UTC)"
     }
 
@@ -174,7 +174,7 @@ erDiagram
 | `venue` | VARCHAR(256) | | 发表会议/期刊 (如 VLDB, SIGMOD) |
 | `year` | INT | | 发表年份 |
 | `keywords` | VARCHAR(512) | | 关键词 (逗号分隔) |
-| `url` | VARCHAR(512) | | Google Scholar 链接 |
+| `url` | VARCHAR(512) | | 论文来源链接（DOI / 出版方 / OpenAlex） |
 | `created_at` | DATETIME | DEFAULT UTC_NOW | 记录创建时间 |
 
 #### 3. `user_clicks` — 用户点击记录表
@@ -387,7 +387,7 @@ Token 有效期: 30 分钟 | 签名算法: HS256
 | 登录 | `LoginForm.vue` | 用户名密码登录，JWT 持久化到 localStorage |
 | 注册 | `RegisterForm.vue` | 新用户注册 (用户名、邮箱、姓名) |
 | 论文搜索 | `PaperSearch.vue` | 语义搜索 + 搜索历史标签 + 分页表格 |
-| 论文详情 | `PaperDetail.vue` | 标题、作者、摘要、关键词、Google Scholar 跳转 |
+| 论文详情 | `PaperDetail.vue` | 标题、作者、摘要、关键词、论文来源链接跳转 |
 | 论文推荐 | `PaperRecommend.vue` | 基于浏览历史的个性化推荐列表 |
 | AI 对话 | `Chat.vue` | 流式 Markdown 渲染 + 多轮对话 |
 | 用户管理 | `Profile.vue`, `CheckUserInfo.vue`, `AddUser.vue` | 个人信息、用户列表、添加用户 |
@@ -521,7 +521,14 @@ cd backend
 python seed_papers.py
 ```
 
-120 篇 CS/AI 领域论文将写入 MySQL 并索引到 ChromaDB。
+120 篇真实来源论文数据（由 OpenAlex 检索并重建摘要）将写入 MySQL 并索引到 ChromaDB。
+
+如果你想重新生成这 120 篇论文，可执行：
+
+```bash
+cd backend
+python refresh_seed_data_from_openalex.py
+```
 
 ### 8. 启动前端
 
@@ -582,7 +589,8 @@ mysql_fastapi_vue_project/
 │   ├── crud.py                        # 数据库操作
 │   ├── security.py                    # 密码哈希 (bcrypt)
 │   ├── seed_papers.py                 # 种子数据导入脚本
-│   ├── seed_data/papers.json          # 120 篇论文数据
+│   ├── seed_data/papers.json          # 120 篇真实来源论文数据
+│   ├── refresh_seed_data_from_openalex.py # 从 OpenAlex 生成真实摘要数据
 │   └── requirements.txt
 │
 ├── backend_algo/                      # 算法层 (FastAPI)
@@ -934,6 +942,15 @@ cd mysql_fastapi_vue_project
 .\.venv\Scripts\Activate.ps1
 cd .\backend
 python .\seed_papers.py
+```
+
+如需重新抓取真实来源摘要：
+
+```powershell
+cd mysql_fastapi_vue_project
+.\.venv\Scripts\Activate.ps1
+cd .\backend
+python .\refresh_seed_data_from_openalex.py
 ```
 
 ### 9. 启动前端

@@ -1,5 +1,9 @@
 # ChromaDB data
 chroma_data/
+*.sqlite3
+*.swp
+*.swo
+backend_algo/[0-9a-f-]*/
 
 # Python
 __pycache__/
