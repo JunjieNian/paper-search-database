@@ -421,7 +421,7 @@ Token 有效期: 30 分钟 | 签名算法: HS256
 | `MYSQL_PASSWORD` | *(空)* | 数据库密码 |
 | `MYSQL_HOST` | `127.0.0.1` | 数据库地址 |
 | `MYSQL_PORT` | `3306` | 数据库端口 |
-| `MYSQL_DATABASE` | `test` | 数据库名 |
+| `MYSQL_DATABASE` | `paper_search` | 数据库名 |
 | `ALGO_URL` | `http://localhost:8003` | 算法层服务地址 |
 
 #### Qwen / Embedding (Backend_Algo)
@@ -441,6 +441,105 @@ Token 有效期: 30 分钟 | 签名算法: HS256
 | `CHROMA_PERSIST_DIR` | `./chroma_data` | 本地持久化目录 |
 
 ---
+
+## 最短启动顺序
+
+### 新机器从零启动
+
+1. 克隆仓库并安装依赖：
+
+```bash
+git clone git@github.com:JunjieNian/paper-search-database.git
+cd paper-search-database
+
+python3 -m venv .venv
+source .venv/bin/activate
+
+pip install -r backend/requirements.txt
+pip install -r backend_algo/requirements.txt
+cd frontend && npm install && cd ..
+```
+
+2. 复制配置模板：
+
+```bash
+cp backend/.env.example backend/.env
+cp backend_algo/.env.example backend_algo/.env
+cp frontend/.env.development.example frontend/.env.development.local
+```
+
+3. 修改最少必要配置：
+- `backend/.env`：填写 `MYSQL_USER`、`MYSQL_PASSWORD`、`MYSQL_DATABASE`
+- `backend_algo/.env`：填写 `DASHSCOPE_API_KEY`
+
+4. 创建 MySQL 数据库：
+
+```sql
+CREATE DATABASE paper_search CHARACTER SET utf8mb4;
+```
+
+5. 重建本地向量目录：
+
+```bash
+rm -rf ./chroma_data
+```
+
+6. 分别打开 3 个终端，启动服务：
+
+终端 1：
+```bash
+cd paper-search-database/backend_algo
+python -m uvicorn main:app --host 0.0.0.0 --port 8003
+```
+
+终端 2：
+```bash
+cd paper-search-database/backend
+python -m uvicorn main:app --host 0.0.0.0 --port 8000
+```
+
+终端 3：
+```bash
+cd paper-search-database/frontend
+npm run dev -- --host 0.0.0.0
+```
+
+7. 再开第 4 个终端，导入论文并建立向量索引：
+
+```bash
+cd backend
+python seed_papers.py
+```
+
+8. 打开页面：`http://localhost:5173`
+
+### 已安装后的最短重启顺序
+
+如果依赖、数据库、`.env` 都已经准备好，最短只要这 4 步：
+
+终端 1：
+```bash
+cd paper-search-database/backend_algo
+python -m uvicorn main:app --host 0.0.0.0 --port 8003
+```
+
+终端 2：
+```bash
+cd paper-search-database/backend
+python -m uvicorn main:app --host 0.0.0.0 --port 8000
+```
+
+终端 3：
+```bash
+cd paper-search-database/frontend
+npm run dev -- --host 0.0.0.0
+```
+
+终端 4（仅当你更新了 `papers.json` 或清空了 `chroma_data` 时需要）：
+```bash
+cd paper-search-database/backend
+python seed_papers.py
+```
 
 ## 配置模板
 
@@ -503,7 +602,7 @@ uvicorn main:app --host 0.0.0.0 --port 8003
 ### 4. 创建 MySQL 数据库
 
 ```sql
-CREATE DATABASE IF NOT EXISTS test CHARACTER SET utf8mb4;
+CREATE DATABASE IF NOT EXISTS paper_search CHARACTER SET utf8mb4;
 ```
 
 ### 5. 启动业务层
@@ -859,8 +958,8 @@ MIT
 ### 2. 克隆并安装依赖
 
 ```powershell
-git clone git@github.com:JunjieNian/mysql_fastapi_vue_project.git
-cd mysql_fastapi_vue_project
+git clone git@github.com:JunjieNian/paper-search-database.git
+cd paper-search-database
 
 py -3.12 -m venv .venv
 .\.venv\Scripts\Activate.ps1
@@ -890,7 +989,7 @@ Copy-Item .\frontend\.env.development.example .\frontend\.env.development.local
 先在 Windows 启动 MySQL 服务，然后执行：
 
 ```sql
-CREATE DATABASE test CHARACTER SET utf8mb4;
+CREATE DATABASE paper_search CHARACTER SET utf8mb4;
 ```
 
 如果你用的是命令行客户端：
@@ -916,7 +1015,7 @@ chroma run --host localhost --port 8002 --path .\chroma_data
 新开一个 PowerShell：
 
 ```powershell
-cd mysql_fastapi_vue_project
+cd paper-search-database
 .\.venv\Scripts\Activate.ps1
 cd .\backend_algo
 uvicorn main:app --host 0.0.0.0 --port 8003
@@ -927,7 +1026,7 @@ uvicorn main:app --host 0.0.0.0 --port 8003
 再开一个 PowerShell：
 
 ```powershell
-cd mysql_fastapi_vue_project
+cd paper-search-database
 .\.venv\Scripts\Activate.ps1
 cd .\backend
 uvicorn main:app --host 0.0.0.0 --port 8000
@@ -938,7 +1037,7 @@ uvicorn main:app --host 0.0.0.0 --port 8000
 再开一个 PowerShell：
 
 ```powershell
-cd mysql_fastapi_vue_project
+cd paper-search-database
 .\.venv\Scripts\Activate.ps1
 cd .\backend
 python .\seed_papers.py
@@ -947,7 +1046,7 @@ python .\seed_papers.py
 如需重新抓取真实来源摘要：
 
 ```powershell
-cd mysql_fastapi_vue_project
+cd paper-search-database
 .\.venv\Scripts\Activate.ps1
 cd .\backend
 python .\refresh_seed_data_from_openalex.py
@@ -958,7 +1057,7 @@ python .\refresh_seed_data_from_openalex.py
 再开一个 PowerShell：
 
 ```powershell
-cd mysql_fastapi_vue_project\frontend
+cd paper-search-database\frontend
 npm run dev -- --host 0.0.0.0
 ```
 
