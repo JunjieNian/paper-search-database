@@ -4,6 +4,9 @@ chroma_data/
 # Python
 __pycache__/
 *.pyc
+.ipynb_checkpoints/
+*-checkpoint.py
+*-checkpoint.md
 
 # Logs
 logs
