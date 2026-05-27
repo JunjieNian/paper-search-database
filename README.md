@@ -419,7 +419,7 @@ Token 有效期: 30 分钟 | 签名算法: HS256
 |---------|--------|------|
 | `MYSQL_USER` | `root` | 数据库用户名 |
 | `MYSQL_PASSWORD` | *(空)* | 数据库密码 |
-| `MYSQL_HOST` | `127.0.0.1` | 数���库地址 |
+| `MYSQL_HOST` | `127.0.0.1` | 数据库地址 |
 | `MYSQL_PORT` | `3306` | 数据库端口 |
 | `MYSQL_DATABASE` | `test` | 数据库名 |
 | `ALGO_URL` | `http://localhost:8003` | 算法层服务地址 |
@@ -440,19 +440,39 @@ Token 有效期: 30 分钟 | 签名算法: HS256
 
 ---
 
+## 配置模板
+
+推荐只为“跨机器会变化的配置”提供示例文件，不需要给每个源码文件都做 `.example`。
+
+| 目录 | 提交到 Git 的模板 | 本机实际使用文件 |
+|------|------------------|------------------|
+| `backend/` | `backend/.env.example` | `backend/.env` |
+| `backend_algo/` | `backend_algo/.env.example` | `backend_algo/.env` |
+| `frontend/` | `frontend/.env.development.example` | `frontend/.env.development.local` |
+
+说明：
+- 源代码文件应正常纳入 Git 管理，不应该因为“可能修改”就全部忽略。
+- 应忽略的是本机私有配置、缓存、数据库持久化目录、日志等运行时产物。
+- 本项目已默认忽略 `.env`、`chroma_data/`、`__pycache__/`、`.ipynb_checkpoints/` 等本地文件。
+
 ## 启动步骤
 
-### 1. 配置 DashScope / Qwen 环境变量
+### 1. 配置模板文件
+
+先复制模板文件：
 
 ```bash
-export VLLM_BASE_URL="https://dashscope.aliyuncs.com/compatible-mode/v1"
-export DASHSCOPE_API_KEY="你的百炼 API Key"
-export LLM_MODEL="qwen-flash"          # 需要更稳回答时可改成 qwen-plus
-export EMBEDDING_MODEL="text-embedding-v4"
-export EMBEDDING_DIMENSIONS="1024"
+cp backend/.env.example backend/.env
+cp backend_algo/.env.example backend_algo/.env
+cp frontend/.env.development.example frontend/.env.development.local
 ```
 
-如需继续使用本地 vLLM，可覆盖 `VLLM_BASE_URL`、`VLLM_API_KEY` 和 `LLM_MODEL`。
+然后按机器实际情况修改：
+- `backend/.env`：MySQL 连接、`ALGO_URL`、JWT 密钥
+- `backend_algo/.env`：DashScope API Key、Qwen 模型名、Embedding 参数
+- `frontend/.env.development.local`：前端代理到哪个后端地址
+
+如需继续使用本地 vLLM，可在 `backend_algo/.env` 中覆盖 `VLLM_BASE_URL`、`VLLM_API_KEY` 和 `LLM_MODEL`。
 
 ### 2. 启动 ChromaDB
 
@@ -472,7 +492,7 @@ chroma run --host localhost --port 8002 --path ./chroma_data
 
 ```bash
 cd backend_algo
-pip install fastapi uvicorn requests numpy chromadb openai
+pip install -r requirements.txt
 uvicorn main:app --host 0.0.0.0 --port 8003
 ```
 
@@ -486,7 +506,7 @@ CREATE DATABASE IF NOT EXISTS test CHARACTER SET utf8mb4;
 
 ```bash
 cd backend
-pip install fastapi uvicorn sqlalchemy pymysql pyjwt passlib[bcrypt] requests
+pip install -r requirements.txt
 uvicorn main:app --host 0.0.0.0 --port 8000
 ```
 
@@ -504,7 +524,7 @@ python seed_papers.py
 ```bash
 cd frontend
 npm install
-npm run dev -- --host
+npm run dev -- --host 0.0.0.0
 ```
 
 ### 9. 访问
@@ -812,3 +832,115 @@ wrk -t4 -c100 -d30s -s search_payload.lua http://localhost:8000/search
 ## License
 
 MIT
+
+
+---
+
+## Windows 本地运行（PowerShell）
+
+### 1. 安装依赖
+
+- Python 3.12
+- Node.js 18+
+- MySQL 8.0
+
+### 2. 克隆并安装依赖
+
+```powershell
+git clone git@github.com:JunjieNian/mysql_fastapi_vue_project.git
+cd mysql_fastapi_vue_project
+
+py -3.12 -m venv .venv
+.\.venv\Scripts\Activate.ps1
+
+pip install -r .\backend\requirements.txt
+pip install -r .\backend_algo\requirements.txt
+
+cd .\frontend
+npm install
+cd ..
+```
+
+### 3. 复制配置模板
+
+```powershell
+Copy-Item .\backend\.env.example .\backend\.env
+Copy-Item .\backend_algo\.env.example .\backend_algo\.env
+Copy-Item .\frontend\.env.development.example .\frontend\.env.development.local
+```
+
+重点修改：
+- `backend/.env` 中的 MySQL 用户名、密码
+- `backend_algo/.env` 中的 `DASHSCOPE_API_KEY`
+
+### 4. 初始化 MySQL
+
+先在 Windows 启动 MySQL 服务，然后执行：
+
+```sql
+CREATE DATABASE test CHARACTER SET utf8mb4;
+```
+
+如果你用的是命令行客户端：
+
+```powershell
+mysql -u root -p
+```
+
+### 5. 重建 Chroma 向量库
+
+```powershell
+Remove-Item -Recurse -Force .\chroma_data -ErrorAction SilentlyContinue
+chroma run --host localhost --port 8002 --path .\chroma_data
+```
+
+### 6. 启动算法层
+
+新开一个 PowerShell：
+
+```powershell
+cd mysql_fastapi_vue_project
+.\.venv\Scripts\Activate.ps1
+cd .\backend_algo
+uvicorn main:app --host 0.0.0.0 --port 8003
+```
+
+### 7. 启动业务层
+
+再开一个 PowerShell：
+
+```powershell
+cd mysql_fastapi_vue_project
+.\.venv\Scripts\Activate.ps1
+cd .\backend
+uvicorn main:app --host 0.0.0.0 --port 8000
+```
+
+### 8. 导入论文数据
+
+再开一个 PowerShell：
+
+```powershell
+cd mysql_fastapi_vue_project
+.\.venv\Scripts\Activate.ps1
+cd .\backend
+python .\seed_papers.py
+```
+
+### 9. 启动前端
+
+再开一个 PowerShell：
+
+```powershell
+cd mysql_fastapi_vue_project\frontend
+npm run dev -- --host 0.0.0.0
+```
+
+浏览器打开：`http://localhost:5173`
+
+### 10. 常见问题
+
+- 如果 `seed_papers.py` 报算法层连接失败，先确认 `backend_algo` 已经启动在 `http://localhost:8003`。
+- 如果聊天报错，先确认 `backend_algo/.env` 里的 `DASHSCOPE_API_KEY` 正确。
+- 如果搜索报向量维度不匹配，删除 `chroma_data/` 后重新执行第 5 步和第 8 步。
+

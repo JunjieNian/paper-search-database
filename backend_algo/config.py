@@ -1,4 +1,9 @@
 import os
+from pathlib import Path
+
+from dotenv import load_dotenv
+
+load_dotenv(Path(__file__).with_name(".env"))
 
 # Qwen OpenAI 兼容服务配置（默认使用阿里百炼 DashScope）
 DASHSCOPE_COMPAT_BASE_URL = "https://dashscope.aliyuncs.com/compatible-mode/v1"

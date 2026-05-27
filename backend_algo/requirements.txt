@@ -7,3 +7,4 @@ requests
 numpy
 chromadb
 openai
+python-dotenv
