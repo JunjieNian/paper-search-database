@@ -1,9 +1,12 @@
 import requests
 import json
+import os
+
+algo_url = os.getenv("ALGO_URL", "http://localhost:8003").rstrip("/")
 
 res = ''
 end = False
-with requests.post(f'http://localhost:8001/chat/stream', json={
+with requests.post(f'{algo_url}/chat/stream/', json={
     'messages': [
         {
             'role': 'user',  # role: user表示是用户说的

@@ -25,6 +25,7 @@ async def chat_stream(conversation: schemas.Conversation):
             'stream': True,
             'messages': [m.model_dump() for m in conversation.messages],
         }, headers=HEADERS, stream=True, timeout=60) as resp:
+            resp.raise_for_status()
             for raw_line in resp.iter_lines():
                 line = raw_line.decode('utf-8').strip()
                 if line == '':
@@ -49,6 +50,7 @@ async def chat(conversation: schemas.Conversation):
         'stream': False,
         'messages': [m.model_dump() for m in conversation.messages],
     }, headers=HEADERS, timeout=60)
+    resp.raise_for_status()
     return resp.json()
 
 

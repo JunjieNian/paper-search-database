@@ -1,8 +1,21 @@
 import os
 
-# vLLM 本地模型服务配置
-# 启动 vLLM 的命令见 README.md
+# Qwen OpenAI 兼容服务配置（默认使用阿里百炼 DashScope）
+DASHSCOPE_COMPAT_BASE_URL = "https://dashscope.aliyuncs.com/compatible-mode/v1"
 
-VLLM_BASE_URL = os.getenv("VLLM_BASE_URL", "http://localhost:11434/v1")
-VLLM_API_KEY = os.getenv("VLLM_API_KEY", "vllm")
-LLM_MODEL = os.getenv("LLM_MODEL", "qwen2.5-3b")
+VLLM_BASE_URL = os.getenv("VLLM_BASE_URL", DASHSCOPE_COMPAT_BASE_URL)
+VLLM_API_KEY = os.getenv("VLLM_API_KEY", os.getenv("DASHSCOPE_API_KEY", ""))
+LLM_MODEL = os.getenv("LLM_MODEL", "qwen-flash")
+
+EMBEDDING_BASE_URL = os.getenv("EMBEDDING_BASE_URL", VLLM_BASE_URL)
+EMBEDDING_API_KEY = os.getenv(
+    "EMBEDDING_API_KEY",
+    os.getenv("DASHSCOPE_API_KEY", VLLM_API_KEY),
+)
+EMBEDDING_MODEL = os.getenv("EMBEDDING_MODEL", "text-embedding-v4")
+EMBEDDING_DIMENSIONS = int(os.getenv("EMBEDDING_DIMENSIONS", "1024"))
+EMBEDDING_BATCH_SIZE = int(os.getenv("EMBEDDING_BATCH_SIZE", "10"))
+
+CHROMA_HOST = os.getenv("CHROMA_HOST", "localhost")
+CHROMA_PORT = int(os.getenv("CHROMA_PORT", "8002"))
+COLLECTION_NAME = os.getenv("COLLECTION_NAME", "papers")

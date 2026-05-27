@@ -3,6 +3,7 @@
 用法: cd backend && python seed_papers.py
 """
 import json
+import os
 import sys
 import requests
 
@@ -60,7 +61,8 @@ def main():
         db.close()
 
     # 4. 调用算法层 /index 索引到 ChromaDB
-    algo_url = "http://localhost:8001/index"
+    algo_base_url = os.getenv("ALGO_URL", "http://localhost:8003").rstrip("/")
+    algo_url = f"{algo_base_url}/index"
     batch_size = 50
     total_indexed = 0
 

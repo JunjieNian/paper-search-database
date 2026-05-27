@@ -1,6 +1,6 @@
 # Academic Paper Search & Recommend System
 
-基于 **Vue 3 + FastAPI + ChromaDB + vLLM** 的学术论文语义搜索与个性化推荐系统。
+基于 **Vue 3 + FastAPI + ChromaDB + Qwen OpenAI 兼容接口** 的学术论文语义搜索与个性化推荐系统。
 
 系统融合向量语义检索、基于 Embedding 质心的协同过滤推荐、以及大语言模型驱动的学术问答，为用户提供一站式学术论文发现与交互体验。
 
@@ -52,24 +52,24 @@
 │                         :8003                                │
 │  ┌──────────────┐  ┌────────────┐  ┌─────────────────────┐  │
 │  │ 向量语义检索  │  │ 质心推荐    │  │ LLM 对话 (流式/非流式)│  │
-│  │ ChromaDB     │  │ Embedding  │  │ vLLM OpenAI API     │  │
+│  │ ChromaDB     │  │ Embedding  │  │ Qwen Compatible API │  │
 │  │ + Reranker   │  │ Centroid   │  │                     │  │
 │  └──────┬───────┘  └─────┬──────┘  └──────────┬──────────┘  │
 └─────────┼────────────────┼─────────────────────┼────────────┘
           │                │                     │
           ▼                ▼                     ▼
-   ┌────────────┐   ┌────────────┐        ┌──────────┐
-   │  ChromaDB  │   │  ChromaDB  │        │   vLLM   │
-   │ 向量数据库  │   │ Embeddings │        │Qwen2.5-3B│
-   │   :8002    │   │            │        │  :11434  │
-   └────────────┘   └────────────┘        └──────────┘
+   ┌────────────┐   ┌────────────┐        ┌──────────────┐
+   │  ChromaDB  │   │ DashScope  │        │ DashScope /  │
+   │ 向量数据库  │   │ text-embed │        │ Qwen Chat    │
+   │   :8002    │   │    -v4     │        │ compatible   │
+   └────────────┘   └────────────┘        └──────────────┘
 ```
 
 ### 数据流说明
 
 1. **搜索流程**: 用户输入查询 → Backend 记录搜索历史 → 转发到 Algo 层 → ChromaDB 向量检索 → 返回 paper_id + score → Backend 从 MySQL 补全元数据 → 返回前端
 2. **推荐流程**: 用户浏览论文时记录点击 → 请求推荐时获取点击历史 → Algo 层计算 Embedding 质心 → ChromaDB 近邻搜索 → 过滤已读 → 返回推荐列表
-3. **对话流程**: 前端发送多轮对话 → Backend 注入系统提示词 → 转发到 Algo 层 → vLLM 流式生成 → SSE 实时返回前端
+3. **对话流程**: 前端发送多轮对话 → Backend 注入系统提示词 → 转发到 Algo 层 → Qwen OpenAI 兼容接口流式生成 → SSE 实时返回前端
 4. **降级机制**: 算法层不可用时，搜索自动降级为 MySQL `LIKE` 模糊匹配
 
 ---
@@ -92,9 +92,9 @@
 | **算法层** | FastAPI | 0.114.0 | 独立微服务 |
 | | ChromaDB | - | 向量数据库 |
 | | NumPy | - | 数值计算 (质心/余弦相似度) |
-| | OpenAI SDK | - | vLLM 兼容客户端 |
-| **模型** | Qwen2.5-3B-Instruct | - | 本地部署的 LLM |
-| | all-MiniLM-L6-v2 | 384维 | ChromaDB 默认 Embedding 模型 |
+| | OpenAI SDK | - | DashScope / OpenAI 兼容客户端 |
+| **模型** | qwen-flash / qwen-plus | - | 对话模型 |
+| | text-embedding-v4 | 默认 1024维 | 论文语义检索 Embedding |
 | **存储** | MySQL 8.0+ | - | 结构化数据 |
 | | ChromaDB | - | 向量索引 (Embedding 存储) |
 
@@ -308,7 +308,7 @@ LIMIT page_size OFFSET skip;
 3. 按 score 降序排列，返回前 top_n 个
 ```
 
-### 4. LLM 学术问答 (Qwen2.5 Chat)
+### 4. LLM 学术问答 (Qwen Chat)
 
 #### 系统设计
 
@@ -317,7 +317,7 @@ LIMIT page_size OFFSET skip;
     ↓
 用户多轮对话历史 [msg₁, msg₂, ..., msgₙ]
     ↓
-vLLM OpenAI Compatible API
+DashScope / OpenAI Compatible API
     ↓
 流式 SSE 响应 → 前端实时渲染 Markdown
 ```
@@ -325,7 +325,7 @@ vLLM OpenAI Compatible API
 #### 流式传输机制
 
 - 前端使用 `fetch` + `ReadableStream` 读取 SSE
-- 后端使用 FastAPI `StreamingResponse` 透传 vLLM 的 Server-Sent Events
+- 后端使用 FastAPI `StreamingResponse` 透传 Qwen 兼容接口的 Server-Sent Events
 - 支持多轮对话上下文保持
 
 ---
@@ -409,7 +409,7 @@ Token 有效期: 30 分钟 | 签名算法: HS256
 - Python 3.10+
 - Node.js 18+
 - MySQL 8.0+
-- NVIDIA GPU (运行 vLLM)
+- NVIDIA GPU（仅在本地自托管 vLLM 时需要）
 
 ### 环境变量
 
@@ -424,57 +424,65 @@ Token 有效期: 30 分钟 | 签名算法: HS256
 | `MYSQL_DATABASE` | `test` | 数据库名 |
 | `ALGO_URL` | `http://localhost:8003` | 算法层服务地址 |
 
-#### vLLM / LLM (Backend_Algo)
+#### Qwen / Embedding (Backend_Algo)
 
 | 环境变量 | 默认值 | 说明 |
 |---------|--------|------|
-| `VLLM_BASE_URL` | `http://localhost:11434/v1` | vLLM OpenAI 兼容端点 |
-| `VLLM_API_KEY` | `vllm` | vLLM API Key |
-| `LLM_MODEL` | `qwen2.5-3b` | vLLM 中的模型名 |
+| `VLLM_BASE_URL` | `https://dashscope.aliyuncs.com/compatible-mode/v1` | Qwen OpenAI 兼容端点 |
+| `VLLM_API_KEY` | *(空)* | 对话模型 API Key |
+| `DASHSCOPE_API_KEY` | *(空)* | 可同时作为对话 / Embedding 的通用 API Key |
+| `LLM_MODEL` | `qwen-flash` | 对话模型名 |
+| `EMBEDDING_BASE_URL` | 同 `VLLM_BASE_URL` | Embedding OpenAI 兼容端点 |
+| `EMBEDDING_API_KEY` | 同 `VLLM_API_KEY` | Embedding API Key |
+| `EMBEDDING_MODEL` | `text-embedding-v4` | Embedding 模型名 |
+| `EMBEDDING_DIMENSIONS` | `1024` | Embedding 维度 |
+| `EMBEDDING_BATCH_SIZE` | `10` | 单批最多 10 条文本 |
 
 ---
 
 ## 启动步骤
 
-### 1. 下载 LLM 模型
-
-从 [ModelScope](https://modelscope.cn/models/Qwen/Qwen2.5-3B-Instruct) 或 [HuggingFace](https://huggingface.co/Qwen/Qwen2.5-3B-Instruct) 下载 Qwen2.5-3B-Instruct 模型。
-
-### 2. 启动 vLLM
+### 1. 配置 DashScope / Qwen 环境变量
 
 ```bash
-pip install vllm
-
-CUDA_VISIBLE_DEVICES=0 vllm serve /path/to/Qwen2.5-3B-Instruct \
-  --port 11434 \
-  --api-key vllm \
-  --served-model-name qwen2.5-3b \
-  --gpu-memory-utilization 0.3 \
-  --max-model-len 4096
+export VLLM_BASE_URL="https://dashscope.aliyuncs.com/compatible-mode/v1"
+export DASHSCOPE_API_KEY="你的百炼 API Key"
+export LLM_MODEL="qwen-flash"          # 需要更稳回答时可改成 qwen-plus
+export EMBEDDING_MODEL="text-embedding-v4"
+export EMBEDDING_DIMENSIONS="1024"
 ```
 
-### 3. 启动 ChromaDB
+如需继续使用本地 vLLM，可覆盖 `VLLM_BASE_URL`、`VLLM_API_KEY` 和 `LLM_MODEL`。
+
+### 2. 启动 ChromaDB
 
 ```bash
 pip install chromadb
 chroma run --host localhost --port 8002 --path ./chroma_data
 ```
 
-### 4. 启动算法层
+从本地 `all-MiniLM-L6-v2` 切到 `text-embedding-v4` 后，需要先删除旧向量索引再重建：
+
+```bash
+rm -rf ./chroma_data
+chroma run --host localhost --port 8002 --path ./chroma_data
+```
+
+### 3. 启动算法层
 
 ```bash
 cd backend_algo
-pip install fastapi uvicorn requests numpy chromadb
+pip install fastapi uvicorn requests numpy chromadb openai
 uvicorn main:app --host 0.0.0.0 --port 8003
 ```
 
-### 5. 创建 MySQL 数据库
+### 4. 创建 MySQL 数据库
 
 ```sql
 CREATE DATABASE IF NOT EXISTS test CHARACTER SET utf8mb4;
 ```
 
-### 6. 启动业务层
+### 5. 启动业务层
 
 ```bash
 cd backend
@@ -482,7 +490,7 @@ pip install fastapi uvicorn sqlalchemy pymysql pyjwt passlib[bcrypt] requests
 uvicorn main:app --host 0.0.0.0 --port 8000
 ```
 
-### 7. 导入种子数据
+### 6. 导入种子数据
 
 ```bash
 cd backend
@@ -555,7 +563,7 @@ mysql_fastapi_vue_project/
 │
 ├── backend_algo/                      # 算法层 (FastAPI)
 │   ├── main.py                        # 搜索/推荐/对话路由
-│   ├── config.py                      # vLLM 配置
+│   ├── config.py                      # Qwen / Embedding 配置
 │   ├── vector_store.py                # ChromaDB 交互
 │   ├── reranker.py                    # 余弦相似度重排序
 │   ├── schemas.py                     # 请求/响应模型
@@ -738,7 +746,7 @@ total_time = t3 - t0
 
 | 实验编号 | Embedding 模型 | 维度 | 参数量 | 语言偏向 |
 |---------|---------------|------|--------|---------|
-| M1 | all-MiniLM-L6-v2 (当前) | 384 | 22M | 英文 |
+| M1 | text-embedding-v4 (当前) | 1024 | API 服务 | 中英双语 |
 | M2 | all-mpnet-base-v2 | 768 | 109M | 英文 |
 | M3 | text2vec-base-chinese | 768 | 102M | 中文 |
 | M4 | bge-small-en-v1.5 | 384 | 33M | 英文 |

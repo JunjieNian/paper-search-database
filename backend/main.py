@@ -192,21 +192,63 @@ async def chat(
     return schemas.ChatResponse(response=resp.json()['choices'][0]['message']['content'])
 
 SYSTEM_PROMPT = (
-    "你是「学术论文搜索与推荐系统」的 AI 助手。本系统的功能：\n"
+    "你是「学术论文搜索与推荐系统」的 AI 助手，专门帮助用户理解和分析计算机科学领域的学术论文。\n\n"
+    "## 你的能力\n"
+    "- 解读论文内容：解释摘要、方法、结论，用通俗语言阐述技术要点\n"
+    "- 对比分析：比较不同论文的方法、优缺点、适用场景\n"
+    "- 知识问答：回答数据库、分布式系统、机器学习等 CS 领域的学术问题\n"
+    "- 使用引导：帮助用户使用论文搜索、推荐等系统功能\n\n"
+    "## 系统功能\n"
     "1. 论文搜索 — 左侧菜单「论文搜索」，输入关键词进行语义搜索\n"
     "2. 论文推荐 — 左侧菜单「论文推荐」，根据浏览历史推荐相关论文\n"
-    "3. 论文详情 — 点击搜索/推荐结果中的论文查看摘要，点击链接图标跳转 Google Scholar\n"
-    "4. AI 对话 — 即本页面，可以问学术问题或网站使用方法\n"
-    "论文库覆盖数据库、分布式系统、查询优化等 CS 领域。请用中文简洁回答。"
+    "3. 论文详情 — 点击论文查看摘要，点击链接图标跳转 Google Scholar\n"
+    "4. AI 对话 — 即本页面\n\n"
+    "## 回答要求\n"
+    "- 用中文回答，技术术语保留英文原文并附中文解释\n"
+    "- 引用论文时使用「标题 (作者, 会议 年份)」格式\n"
+    "- 如果用户提到的论文在下方的阅读上下文中，优先基于论文实际内容回答\n"
+    "- 回答要有条理，适当使用 Markdown 格式（列表、加粗、代码块等）\n"
 )
+
+
+def _build_paper_context(db, user_id: int, max_papers: int = 5) -> str:
+    """构建用户最近阅读的论文上下文"""
+    clicked_ids = crud.get_clicked_paper_ids(db, user_id=user_id, limit=max_papers)
+    if not clicked_ids:
+        return ""
+
+    papers = crud.get_papers_by_ids(db, clicked_ids)
+    if not papers:
+        return ""
+
+    # 按点击顺序排列
+    paper_map = {p.id: p for p in papers}
+    ordered = [paper_map[pid] for pid in clicked_ids if pid in paper_map]
+
+    context_parts = ["\n## 用户最近阅读的论文"]
+    for i, p in enumerate(ordered, 1):
+        context_parts.append(
+            f"\n### 论文 {i}: {p.title}\n"
+            f"- **作者**: {p.authors}\n"
+            f"- **会议/期刊**: {p.venue} {p.year}\n"
+            f"- **关键词**: {p.keywords}\n"
+            f"- **摘要**: {p.abstract}\n"
+        )
+
+    return "\n".join(context_parts)
 
 
 @app.post("/chat/stream")
 async def chat_stream(
         current_user: Annotated[schemas.User, Depends(get_current_active_user)],
         chat_request: schemas.ChatStreamRequest,
+        db: SessionDep,
 ):
-    messages = [{"role": "system", "content": SYSTEM_PROMPT}]
+    # 构建包含论文上下文的系统提示
+    paper_context = _build_paper_context(db, user_id=current_user.id)
+    system_content = SYSTEM_PROMPT + paper_context
+
+    messages = [{"role": "system", "content": system_content}]
     for m in chat_request.messages:
         messages.append({"role": m.role, "content": m.content})
 

@@ -1,39 +1,46 @@
 import chromadb
-from chromadb.utils.embedding_functions import DefaultEmbeddingFunction
+from uuid import uuid4
 
-default_ef = DefaultEmbeddingFunction()
+from config import CHROMA_HOST, CHROMA_PORT
+from vector_store import embed_texts
 
 # 注意：需要先启动向量数据库，参考README.md
-client = chromadb.HttpClient(host='localhost', port=8002)
+client = chromadb.HttpClient(host=CHROMA_HOST, port=CHROMA_PORT)
 
-# 创建collection，指定embedding_function
-collection = client.create_collection(name="my_collection", embedding_function=default_ef)
+collection_name = f"my_collection_{uuid4().hex[:8]}"
+collection = client.create_collection(
+    name=collection_name,
+    metadata={"hnsw:space": "cosine"},
+)
 
-# 插入数据
+documents = [
+    "The capital of Brazil is Brasilia.",
+    "The capital of France is Paris.",
+    "Horses and cows are both animals",
+]
 collection.add(ids=[
     "id0",
     "id1",
     "id2",
-], documents=[
-    "The capital of Brazil is Brasilia.",
-    "The capital of France is Paris.",
-    "Horses and cows are both animals",
-])
+], documents=documents, embeddings=embed_texts(documents))
 
-# 这句这里是可以不写的，这里写是提醒get_collection时同样需要指定embedding_function
-collection = client.get_collection(name="my_collection", embedding_function=default_ef)
+collection = client.get_collection(name=collection_name)
 
 print(collection.get('id0'))
 print(collection.get('id3'))
 
-print(collection.query(query_texts=[
+query_embeddings = embed_texts([
     "What is the capital of France?",
     "What is the capital of Brazil?",
-], n_results=2))  # 向量检索，批量的，可以输入多个query，对每个query检索n_results个结果
+])
+print(collection.query(
+    query_embeddings=query_embeddings,
+    n_results=2,
+))  # 向量检索，批量的，可以输入多个 query
 
 # 清理测试 collection
-client.delete_collection(name="my_collection")
-print("测试完成，已清理 my_collection")
+client.delete_collection(name=collection_name)
+print(f"测试完成，已清理 {collection_name}")
 
 # 其他操作请参考文档：
 # https://docs.trychroma.com/docs/overview/introduction

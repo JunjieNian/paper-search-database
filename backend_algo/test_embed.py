@@ -1,7 +1,6 @@
 import numpy as np
-from chromadb.utils.embedding_functions import DefaultEmbeddingFunction
-
-ef = DefaultEmbeddingFunction()
+from config import EMBEDDING_DIMENSIONS
+from vector_store import embed_texts
 
 sentences = [
     "What is the capital of France?",
@@ -10,10 +9,10 @@ sentences = [
     "Horses and cows are both animals",
 ]
 
-embeddings_raw = ef(sentences)
+embeddings_raw = embed_texts(sentences)
 
 for emb in embeddings_raw:
-    print(len(emb))  # 打印向量维度 (384)
+    print(len(emb))  # 打印向量维度（默认 1024）
 print()
 
 embeddings = [np.array(emb) for emb in embeddings_raw]
@@ -24,3 +23,5 @@ for i in range(0, 1):
         print(sentences[j])
         print('distance:', np.sum((embeddings[i] - embeddings[j])**2))
         print()
+
+print(f"expected dimensions: {EMBEDDING_DIMENSIONS}")
