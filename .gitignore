@@ -13,6 +13,7 @@ __pycache__/
 *-checkpoint.md
 
 # Logs
+logs/
 logs
 *.log
 npm-debug.log*
