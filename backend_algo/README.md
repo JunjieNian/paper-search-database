@@ -35,6 +35,24 @@ uvicorn main:app --port 8003
 
 文档页面：`http://127.0.0.1:8003/docs`
 
+## 可选 Rerank
+
+如果你想在搜索阶段启用真正的二阶段重排，可在 `backend_algo/.env` 中设置：
+```shell
+RERANK_ENABLED=true
+RERANK_PROVIDER=qwen
+RERANK_MODEL=qwen3-rerank
+RERANK_RECALL_K=60
+RERANK_ENDPOINT=https://dashscope.aliyuncs.com/api/v1/services/rerank/text-rerank/text-rerank
+RERANK_INSTRUCT="Retrieve semantically similar academic paper abstracts relevant to the query."
+RERANK_MAX_DOCUMENT_CHARS=1200
+```
+
+说明：
+- `RERANK_ENABLED=false` 时，系统保持当前的一阶段向量检索。
+- `RERANK_PROVIDER=qwen` 时，算法层会先向量召回，再调用 DashScope Rerank API 进行精排。
+- 搜索请求也支持可选字段 `use_rerank`、`rerank_provider`、`recall_k`，可按请求覆盖默认配置。
+
 如果你想继续使用独立 Chroma 服务，可额外配置：
 ```shell
 CHROMA_CLIENT_MODE=http

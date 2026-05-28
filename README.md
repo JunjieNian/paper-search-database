@@ -442,6 +442,38 @@ Token 有效期: 30 分钟 | 签名算法: HS256
 
 ---
 
+## 本机快速启动命令
+
+如果你已经配好 `.env`、MySQL、依赖，并且只是想在当前机器上最快启动：
+
+### 终端 1：算法层
+```bash
+cd backend_algo
+python3 -m uvicorn main:app --host 0.0.0.0 --port 8003
+```
+
+### 终端 2：业务后端
+```bash
+cd backend
+python3 -m uvicorn main:app --host 0.0.0.0 --port 8000
+```
+
+### 终端 3：前端
+```bash
+cd frontend
+npm run dev -- --host 0.0.0.0
+```
+
+### 如需重建论文向量索引
+```bash
+cd backend
+python3 seed_papers.py
+```
+
+前端访问：`http://localhost:5173`  
+后端文档：`http://127.0.0.1:8000/docs`  
+算法层文档：`http://127.0.0.1:8003/docs`
+
 ## 最短启动顺序
 
 ### 新机器从零启动

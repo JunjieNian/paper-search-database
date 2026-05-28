@@ -1,0 +1,32 @@
+{
+  "B1_full_centroid": {
+    "Hit Rate@10": 0.75,
+    "Coverage": 0.6083333333333333,
+    "Diversity": 0.48874180763959885,
+    "Latency_ms": 12.423070690905055
+  },
+  "B2_last_click_only": {
+    "Hit Rate@10": 0.7083333333333334,
+    "Coverage": 0.7416666666666667,
+    "Diversity": 0.5128160491585732,
+    "Latency_ms": 13.411359551052252
+  },
+  "B3_window_5": {
+    "Hit Rate@10": 0.75,
+    "Coverage": 0.6083333333333333,
+    "Diversity": 0.48874180763959885,
+    "Latency_ms": 10.273167417229464
+  },
+  "B4_no_filter_read": {
+    "Hit Rate@10": 0.5833333333333334,
+    "Coverage": 0.6833333333333333,
+    "Diversity": 0.48182032505671185,
+    "Latency_ms": 10.691937495721504
+  },
+  "B5_centroid_perturbed": {
+    "Hit Rate@10": 0.8333333333333334,
+    "Coverage": 0.7416666666666667,
+    "Diversity": 0.5337201456228892,
+    "Latency_ms": 11.48346836756294
+  }
+}

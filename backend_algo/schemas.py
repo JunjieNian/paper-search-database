@@ -40,11 +40,12 @@ class ConversationResponse(BaseModel):
     prompt_logprobs: Optional[list] = None
 
 
-# ---- Search / Recommend / Index schemas ----
-
 class SearchRequest(BaseModel):
     query: str
     top_k: int = 20
+    use_rerank: Optional[bool] = None
+    rerank_provider: Optional[str] = None
+    recall_k: Optional[int] = None
 
 
 class SearchResult(BaseModel):

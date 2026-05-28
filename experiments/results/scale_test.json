@@ -1,0 +1,62 @@
+{
+  "20": {
+    "num_papers": 20,
+    "embedding_time_ms": 1270.7677469588816,
+    "upsert_time_ms": 134.15100006386638,
+    "index_time_ms": 1404.918747022748,
+    "avg_query_latency_ms": 4.5619151477391515,
+    "p50_latency_ms": 4.377228324301541,
+    "p95_latency_ms": 6.297158271384733,
+    "max_latency_ms": 7.49279869099458
+  },
+  "40": {
+    "num_papers": 40,
+    "embedding_time_ms": 2867.141301976517,
+    "upsert_time_ms": 181.63334298878908,
+    "index_time_ms": 3048.774644965306,
+    "avg_query_latency_ms": 4.360927843178312,
+    "p50_latency_ms": 4.027603931414584,
+    "p95_latency_ms": 6.0423263853105365,
+    "max_latency_ms": 7.630191432933013
+  },
+  "60": {
+    "num_papers": 60,
+    "embedding_time_ms": 3671.8682018108666,
+    "upsert_time_ms": 193.33800487220287,
+    "index_time_ms": 3865.2062066830695,
+    "avg_query_latency_ms": 4.372039219985405,
+    "p50_latency_ms": 3.9521400273467107,
+    "p95_latency_ms": 6.4144136228909066,
+    "max_latency_ms": 7.85075065990289
+  },
+  "80": {
+    "num_papers": 80,
+    "embedding_time_ms": 5168.282449012622,
+    "upsert_time_ms": 275.75652906671166,
+    "index_time_ms": 5444.038978079334,
+    "avg_query_latency_ms": 3.784912754781545,
+    "p50_latency_ms": 3.1453438180809217,
+    "p95_latency_ms": 7.548296207096421,
+    "max_latency_ms": 10.691696079447865
+  },
+  "100": {
+    "num_papers": 100,
+    "embedding_time_ms": 6214.71333806403,
+    "upsert_time_ms": 238.78776608034968,
+    "index_time_ms": 6453.5011041443795,
+    "avg_query_latency_ms": 3.1516859540715814,
+    "p50_latency_ms": 2.8165208641439676,
+    "p95_latency_ms": 4.986490437295284,
+    "max_latency_ms": 6.471932400017977
+  },
+  "120(all)": {
+    "num_papers": 120,
+    "embedding_time_ms": 7576.110634021461,
+    "upsert_time_ms": 225.98901903256774,
+    "index_time_ms": 7802.099653054029,
+    "avg_query_latency_ms": 3.179185193342467,
+    "p50_latency_ms": 2.9090651854251823,
+    "p95_latency_ms": 4.6661455455856995,
+    "max_latency_ms": 5.8472926417986555
+  }
+}

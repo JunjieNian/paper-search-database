@@ -1,14 +1,20 @@
 <script setup lang="ts">
-import { ref, onMounted } from 'vue'
-import { useRoute, useRouter } from 'vue-router'
-import { GetPaperDetail } from '@/request/api'
-import { ElMessage } from 'element-plus'
+import {computed, onMounted, ref} from 'vue'
+import {useRoute, useRouter} from 'vue-router'
+import {ElMessage} from 'element-plus'
+import {GetPaperDetail} from '@/request/api'
 
 const route = useRoute()
 const router = useRouter()
-
 const paper = ref<any>(null)
 const loading = ref(true)
+
+const keywordList = computed(() =>
+  String(paper.value?.keywords || '')
+    .split(',')
+    .map(item => item.trim())
+    .filter(Boolean),
+)
 
 onMounted(async () => {
   const paperId = Number(route.params.paperId)
@@ -19,7 +25,7 @@ onMounted(async () => {
   }
   try {
     paper.value = await GetPaperDetail(paperId)
-  } catch (e: any) {
+  } catch (_error) {
     ElMessage.error('获取论文详情失败')
     router.push('/index/paperSearch')
   } finally {
@@ -29,13 +35,37 @@ onMounted(async () => {
 </script>
 
 <template>
-  <div class="paper-detail" v-loading="loading">
-    <el-page-header @back="router.push('/index/paperSearch')" title="返回搜索" />
+  <div class="page-shell" v-loading="loading">
+    <section class="page-card detail-toolbar">
+      <el-button text @click="router.push('/index/paperSearch')">← 返回搜索</el-button>
+      <el-link v-if="paper?.url" :href="paper.url" target="_blank" rel="noopener" type="primary">
+        打开原文链接
+      </el-link>
+    </section>
 
-    <div v-if="paper" class="detail-content">
-      <h2 class="paper-title">{{ paper.title }}</h2>
+    <section v-if="paper" class="page-hero detail-hero">
+      <p class="page-eyebrow">Paper Detail</p>
+      <h1 class="hero-title">{{ paper.title }}</h1>
+      <p class="hero-description">
+        {{ paper.venue || 'Unknown Venue' }} · {{ paper.year || 'Unknown Year' }}
+      </p>
+      <div class="detail-tags">
+        <el-tag type="primary" effect="dark">作者：{{ paper.authors }}</el-tag>
+        <el-tag v-for="kw in keywordList" :key="kw" effect="dark" class="keyword-tag">
+          {{ kw }}
+        </el-tag>
+      </div>
+    </section>
 
-      <el-descriptions :column="2" border style="margin-top: 20px">
+    <section v-if="paper" class="page-card">
+      <div class="section-header">
+        <div>
+          <h2 class="card-heading">论文信息</h2>
+          <p class="muted-text">这里展示元数据和可跳转链接。</p>
+        </div>
+      </div>
+
+      <el-descriptions :column="2" border>
         <el-descriptions-item label="作者" :span="2">
           {{ paper.authors }}
         </el-descriptions-item>
@@ -46,58 +76,54 @@ onMounted(async () => {
           {{ paper.year }}
         </el-descriptions-item>
         <el-descriptions-item label="关键词" :span="2">
-          <el-tag
-            v-for="kw in (paper.keywords || '').split(',')"
-            :key="kw"
-            type="primary"
-            effect="plain"
-            style="margin-right: 6px; margin-bottom: 4px"
-          >
-            {{ kw.trim() }}
-          </el-tag>
+          {{ paper.keywords }}
         </el-descriptions-item>
         <el-descriptions-item label="链接" :span="2" v-if="paper.url">
-          <a :href="paper.url" target="_blank" rel="noopener">{{ paper.url }}</a>
+          <a :href="paper.url" target="_blank" rel="noopener" class="paper-link">{{ paper.url }}</a>
         </el-descriptions-item>
       </el-descriptions>
+    </section>
 
-      <div class="abstract-section">
-        <h3>摘要</h3>
-        <p class="abstract-text">{{ paper.abstract }}</p>
+    <section v-if="paper" class="page-card">
+      <div class="section-header">
+        <div>
+          <h2 class="card-heading">摘要</h2>
+          <p class="muted-text">已尽量使用更真实、更完整的论文摘要文本。</p>
+        </div>
       </div>
-    </div>
+      <p class="abstract-text">{{ paper.abstract }}</p>
+    </section>
   </div>
 </template>
 
 <style scoped>
-.paper-detail {
-  padding: 20px;
+.detail-toolbar {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  padding-top: 16px;
+  padding-bottom: 16px;
 }
 
-.detail-content {
-  margin-top: 20px;
+.detail-tags {
+  position: relative;
+  z-index: 1;
+  display: flex;
+  flex-wrap: wrap;
+  gap: 10px;
+  margin-top: 22px;
 }
 
-.paper-title {
-  font-size: 22px;
-  line-height: 1.4;
-  color: #303133;
-}
-
-.abstract-section {
-  margin-top: 24px;
-}
-
-.abstract-section h3 {
-  font-size: 16px;
-  color: #606266;
-  margin-bottom: 12px;
+.keyword-tag {
+  border-color: rgba(255, 255, 255, 0.14);
 }
 
 .abstract-text {
   font-size: 15px;
   line-height: 1.8;
-  color: #303133;
+  color: #0f172a;
   text-align: justify;
+  white-space: pre-wrap;
 }
 </style>

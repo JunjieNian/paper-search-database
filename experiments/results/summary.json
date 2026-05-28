@@ -1,0 +1,42 @@
+{
+  "1. 搜索系统消融实验": {
+    "status": "success",
+    "elapsed_s": 33.279560641152784
+  },
+  "2. 推荐系统消融实验": {
+    "status": "success",
+    "elapsed_s": 1.5234267881605774
+  },
+  "3. 搜索系统性能评估": {
+    "status": "success",
+    "elapsed_s": 15.694013683823869
+  },
+  "4. 推荐系统性能评估": {
+    "status": "success",
+    "elapsed_s": 1.7480788440443575
+  },
+  "5. 距离度量对比": {
+    "status": "success",
+    "elapsed_s": 15.006851373007521
+  },
+  "6. 文档表示对比": {
+    "status": "success",
+    "elapsed_s": 56.57835585298017
+  },
+  "7. Reranker 对比": {
+    "status": "success",
+    "elapsed_s": 25.912744662025943
+  },
+  "8. 数据规模测试": {
+    "status": "success",
+    "elapsed_s": 41.68331360211596
+  },
+  "__meta__": {
+    "embedding_model": "text-embedding-v4",
+    "embedding_dimensions": 1024,
+    "chroma_client_mode": "persistent",
+    "mysql_database": "paper_search",
+    "num_runs": 3,
+    "total_elapsed_s": 191.4267155190464
+  }
+}

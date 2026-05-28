@@ -313,10 +313,18 @@ async def search_papers(
 
     # 调用算法层搜索
     try:
-        algo_resp = requests.post(f"{ALGO_URL}/search", json={
+        algo_payload = {
             "query": search_req.query,
             "top_k": search_req.page * search_req.page_size,
-        }, timeout=30)
+        }
+        if search_req.use_rerank is not None:
+            algo_payload["use_rerank"] = search_req.use_rerank
+        if search_req.recall_k is not None:
+            algo_payload["recall_k"] = search_req.recall_k
+        if search_req.rerank_provider:
+            algo_payload["rerank_provider"] = search_req.rerank_provider
+
+        algo_resp = requests.post(f"{ALGO_URL}/search", json=algo_payload, timeout=30)
         algo_resp.raise_for_status()
         algo_results = algo_resp.json().get("results", [])
     except Exception:

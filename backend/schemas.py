@@ -20,8 +20,8 @@ class User(UserBase):
     is_superuser: bool
 
     class Config:
-        # orm_mode = True
         from_attributes = True
+
 
 class UserList(BaseModel):
     total: int
@@ -44,8 +44,6 @@ class ChatMessage(BaseModel):
 class ChatStreamRequest(BaseModel):
     messages: List[ChatMessage]
 
-
-# ---- Paper schemas ----
 
 class PaperBase(BaseModel):
     title: str
@@ -87,12 +85,13 @@ class PaperList(BaseModel):
     papers: List[Paper]
 
 
-# ---- Search schemas ----
-
 class SearchRequest(BaseModel):
     query: str
     page: int = 1
     page_size: int = 10
+    use_rerank: Optional[bool] = None
+    recall_k: Optional[int] = None
+    rerank_provider: Optional[str] = None
 
 
 class SearchResponse(BaseModel):
@@ -100,19 +99,13 @@ class SearchResponse(BaseModel):
     papers: List[PaperBrief]
 
 
-# ---- Click schemas ----
-
 class ClickRequest(BaseModel):
     paper_id: int
 
 
-# ---- Recommend schemas ----
-
 class RecommendResponse(BaseModel):
     papers: List[PaperBrief]
 
-
-# ---- Search history schemas ----
 
 class SearchHistoryItem(BaseModel):
     id: int

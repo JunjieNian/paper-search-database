@@ -1,0 +1,10 @@
+numpy
+chromadb
+sqlalchemy
+pymysql
+scikit-learn
+pandas
+tabulate
+aiohttp
+openai
+python-dotenv

@@ -1,14 +1,21 @@
 from fastapi import FastAPI
 from fastapi.responses import StreamingResponse
-import schemas
-import requests
 import numpy as np
-import vector_store
-from config import VLLM_BASE_URL, VLLM_API_KEY, LLM_MODEL
+import requests
 
+import reranker
+import schemas
+import vector_store
+from config import (
+    LLM_MODEL,
+    RERANK_ENABLED,
+    RERANK_PROVIDER,
+    RERANK_RECALL_K,
+    VLLM_API_KEY,
+    VLLM_BASE_URL,
+)
 
 app = FastAPI()
-
 
 HEADERS = {
     "Authorization": f"Bearer {VLLM_API_KEY}",
@@ -16,84 +23,120 @@ HEADERS = {
 }
 
 
+def _base_ranked_results(ids, distances, top_k: int):
+    results = []
+    for pid, dist in zip(ids[:top_k], distances[:top_k]):
+        score = 1.0 / (1.0 + dist)
+        results.append(schemas.SearchResult(paper_id=int(pid), score=score))
+    results.sort(key=lambda item: item.score, reverse=True)
+    return results
+
+
 @app.post("/chat/stream/")
 async def chat_stream(conversation: schemas.Conversation):
-
     def generator():
-        with requests.post(f'{VLLM_BASE_URL}/chat/completions', json={
-            'model': LLM_MODEL,
-            'stream': True,
-            'messages': [m.model_dump() for m in conversation.messages],
-        }, headers=HEADERS, stream=True, timeout=60) as resp:
-            resp.raise_for_status()
-            for raw_line in resp.iter_lines():
-                line = raw_line.decode('utf-8').strip()
-                if line == '':
+        with requests.post(
+            f"{VLLM_BASE_URL}/chat/completions",
+            json={
+                "model": LLM_MODEL,
+                "stream": True,
+                "messages": [message.model_dump() for message in conversation.messages],
+            },
+            headers=HEADERS,
+            stream=True,
+            timeout=60,
+        ) as response:
+            response.raise_for_status()
+            for raw_line in response.iter_lines():
+                line = raw_line.decode("utf-8").strip()
+                if line == "":
                     continue
-                if line.startswith('data: '):
-                    line = line[len('data: '):]
-                    if line == '[DONE]':
-                        yield raw_line + b'\n'
+                if line.startswith("data: "):
+                    line = line[len("data: ") :]
+                    if line == "[DONE]":
+                        yield raw_line + b"\n"
                         break
                 else:
-                    yield raw_line + b'\n'
+                    yield raw_line + b"\n"
                     break
-                yield raw_line + b'\n'
+                yield raw_line + b"\n"
 
     return StreamingResponse(generator())
 
 
 @app.post("/chat/", response_model=schemas.ConversationResponse)
 async def chat(conversation: schemas.Conversation):
-    resp = requests.post(f'{VLLM_BASE_URL}/chat/completions', json={
-        'model': LLM_MODEL,
-        'stream': False,
-        'messages': [m.model_dump() for m in conversation.messages],
-    }, headers=HEADERS, timeout=60)
-    resp.raise_for_status()
-    return resp.json()
+    response = requests.post(
+        f"{VLLM_BASE_URL}/chat/completions",
+        json={
+            "model": LLM_MODEL,
+            "stream": False,
+            "messages": [message.model_dump() for message in conversation.messages],
+        },
+        headers=HEADERS,
+        timeout=60,
+    )
+    response.raise_for_status()
+    return response.json()
 
 
 @app.post("/search", response_model=schemas.SearchResponse)
 async def search(req: schemas.SearchRequest):
-    """向量检索：ChromaDB 召回，用距离计算相关性分数"""
-    ids, documents, distances = vector_store.search(req.query, top_k=req.top_k)
+    top_k = max(1, req.top_k)
+    use_rerank = RERANK_ENABLED if req.use_rerank is None else req.use_rerank
+    rerank_provider = req.rerank_provider or RERANK_PROVIDER
+    recall_k = top_k
+    if use_rerank and reranker.normalize_provider(rerank_provider) != "none":
+        recall_k = max(top_k, req.recall_k or RERANK_RECALL_K)
+
+    ids, documents, distances = vector_store.search(req.query, top_k=recall_k)
     if not ids:
         return schemas.SearchResponse(results=[])
 
-    results = []
-    for pid, dist in zip(ids, distances):
-        score = 1.0 / (1.0 + dist)
-        results.append(schemas.SearchResult(paper_id=int(pid), score=score))
+    if use_rerank and reranker.normalize_provider(rerank_provider) != "none":
+        try:
+            reranked = reranker.rerank(
+                req.query,
+                documents,
+                top_n=top_k,
+                provider=rerank_provider,
+            )
+            if reranked:
+                results = []
+                for item in reranked:
+                    index = item["index"]
+                    if 0 <= index < len(ids):
+                        results.append(
+                            schemas.SearchResult(
+                                paper_id=int(ids[index]),
+                                score=float(item["relevance_score"]),
+                            )
+                        )
+                if results:
+                    return schemas.SearchResponse(results=results)
+        except Exception as exc:
+            print(f"[rerank] fallback to base vector ranking: {exc}")
 
-    results.sort(key=lambda x: x.score, reverse=True)
-    return schemas.SearchResponse(results=results)
+    return schemas.SearchResponse(results=_base_ranked_results(ids, distances, top_k))
 
 
 @app.post("/recommend", response_model=schemas.RecommendResponse)
 async def recommend(req: schemas.RecommendRequest):
-    """基于用户点击历史的推荐：质心近邻搜索"""
     if not req.clicked_paper_ids:
         return schemas.RecommendResponse(paper_ids=[])
 
     clicked_str_ids = [str(pid) for pid in req.clicked_paper_ids]
-
-    # 获取已点击论文的 embedding
     embeddings = vector_store.get_embeddings_by_ids(clicked_str_ids)
     if embeddings is None or len(embeddings) == 0:
         return schemas.RecommendResponse(paper_ids=[])
 
-    # 计算质心
     centroid = np.mean(np.array(embeddings), axis=0).tolist()
-
-    # 用质心向量进行近邻搜索
     collection = vector_store.get_collection()
     results = collection.query(
         query_embeddings=[centroid],
         n_results=req.top_k + len(req.clicked_paper_ids),
     )
 
-    # 排除已点击的论文
     clicked_set = set(clicked_str_ids)
     paper_ids = []
     for pid in results["ids"][0]:
@@ -107,7 +150,6 @@ async def recommend(req: schemas.RecommendRequest):
 
 @app.post("/index", response_model=schemas.IndexResponse)
 async def index_papers(req: schemas.IndexRequest):
-    """将论文批量索引到 ChromaDB"""
-    papers = [p.model_dump() for p in req.papers]
+    papers = [paper.model_dump() for paper in req.papers]
     count = vector_store.index_papers(papers)
     return schemas.IndexResponse(indexed_count=count)
