@@ -148,3 +148,6 @@ dist
 experiments/.cache/
 experiments/**/__pycache__/
 experiments/**/*.pyc
+
+# Local runtime state
+.run/

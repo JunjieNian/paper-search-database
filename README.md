@@ -446,6 +446,16 @@ Token 有效期: 30 分钟 | 签名算法: HS256
 
 如果你已经配好 `.env`、MySQL、依赖，并且只是想在当前机器上最快启动：
 
+### 一键启动（推荐）
+```bash
+bash start_all.sh
+```
+
+停止全部服务：
+```bash
+bash stop_all.sh
+```
+
 ### 终端 1：算法层
 ```bash
 cd backend_algo
