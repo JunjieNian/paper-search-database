@@ -152,3 +152,10 @@ experiments/**/*.pyc
 
 # Local runtime state
 .run/
+
+# LaTeX build artifacts
+report/build/
+*.aux
+*.fdb_latexmk
+*.fls
+*.synctex.gz
