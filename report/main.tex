@@ -249,8 +249,9 @@
 
 \begin{figure}[H]
 \centering
+\resizebox{0.96\textwidth}{!}{%
 \begin{tikzpicture}[
-    entity/.style={draw, rectangle, rounded corners=4pt, minimum width=4cm, minimum height=0.8cm, fill=blue!10, font=\small\bfseries},
+    entity/.style={draw, rectangle, rounded corners=4pt, minimum width=4.6cm, minimum height=0.9cm, fill=blue!10, font=\small\bfseries},
     attr/.style={font=\scriptsize, align=left},
     rel/.style={draw, diamond, aspect=2, fill=yellow!20, font=\scriptsize, inner sep=2pt},
     arr/.style={-{Stealth[length=4pt]}, thick},
@@ -259,12 +260,12 @@
 
 % Entities
 \node[entity] (users) at (0, 0) {users};
-\node[entity] (papers) at (8, 0) {papers};
-\node[entity] (clicks) at (4, -3) {user\_clicks};
-\node[entity] (history) at (0, -3) {search\_history};
+\node[entity] (papers) at (10, 0) {papers};
+\node[entity] (history) at (-0.6, -4) {search\_history};
+\node[entity] (clicks) at (6.0, -4) {user\_clicks};
 
 % Attributes - users
-\node[attr, anchor=east] at (-0.3, 1.2) {
+\node[attr, anchor=south east] at (-3.0, 0.35) {
   \begin{tabular}{l}
   \underline{id}: INT (PK) \\
   username: VARCHAR(50) UK \\
@@ -276,7 +277,7 @@
 };
 
 % Attributes - papers
-\node[attr, anchor=west] at (8.3, 1.5) {
+\node[attr, anchor=south west] at (12.7, 0.25) {
   \begin{tabular}{l}
   \underline{id}: INT (PK) \\
   title: VARCHAR(512) \\
@@ -290,18 +291,8 @@
   \end{tabular}
 };
 
-% Attributes - clicks
-\node[attr, anchor=north] at (4, -4) {
-  \begin{tabular}{l}
-  \underline{id}: INT (PK) \\
-  user\_id: INT (FK $\to$ users.id) \\
-  paper\_id: INT (FK $\to$ papers.id) \\
-  clicked\_at: DATETIME
-  \end{tabular}
-};
-
 % Attributes - history
-\node[attr, anchor=north] at (0, -4) {
+\node[attr, anchor=north east] at (1.6, -5.25) {
   \begin{tabular}{l}
   \underline{id}: INT (PK) \\
   user\_id: INT (FK $\to$ users.id) \\
@@ -310,10 +301,20 @@
   \end{tabular}
 };
 
+% Attributes - clicks
+\node[attr, anchor=north west] at (4.2, -5.25) {
+  \begin{tabular}{l}
+  \underline{id}: INT (PK) \\
+  user\_id: INT (FK $\to$ users.id) \\
+  paper\_id: INT (FK $\to$ papers.id) \\
+  clicked\_at: DATETIME
+  \end{tabular}
+};
+
 % Relationships
-\node[rel] (r1) at (2, -1.5) {1:N};
-\node[rel] (r2) at (6, -1.5) {1:N};
-\node[rel] (r3) at (0, -1.5) {1:N};
+\node[rel] (r1) at (3.0, -1.9) {1:N};
+\node[rel] (r2) at (8.0, -1.9) {1:N};
+\node[rel] (r3) at (-0.3, -1.9) {1:N};
 
 \draw[line] (users) -- (r1);
 \draw[arr] (r1) -- (clicks);
@@ -323,6 +324,7 @@
 \draw[arr] (r3) -- (history);
 
 \end{tikzpicture}
+}
 \caption{系统ER图}
 \label{fig:er}
 \end{figure}
