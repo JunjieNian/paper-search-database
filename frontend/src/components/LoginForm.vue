@@ -67,7 +67,6 @@ function jumpToRegister() {
     <div class="form-copy">
       <p class="form-eyebrow">Welcome Back</p>
       <h2>登录系统</h2>
-      <p>输入你的账号后，即可进入论文搜索、推荐和 AI 助手。</p>
     </div>
 
     <el-form ref="ruleFormRef" :model="ruleForm" :rules="rules" label-position="top" class="auth-form">
@@ -109,12 +108,6 @@ function jumpToRegister() {
   margin: 0;
   font-size: 28px;
   color: #0f172a;
-}
-
-.form-copy p {
-  margin: 10px 0 0;
-  color: #64748b;
-  line-height: 1.8;
 }
 
 .auth-form :deep(.el-form-item__label) {

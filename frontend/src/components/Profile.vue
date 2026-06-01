@@ -25,19 +25,16 @@ const displayName = computed(() => {
 const quickActions = [
   {
     title: '开始搜索',
-    desc: '按标题、摘要和关键词查找相关论文',
     path: '/index/paperSearch',
     icon: Search,
   },
   {
     title: '查看推荐',
-    desc: '根据浏览记录获得个性化论文推荐',
     path: '/index/paperRecommend',
     icon: Star,
   },
   {
     title: '打开 AI 助手',
-    desc: '用自然语言提问，让模型解释论文或研究方向',
     path: '/index/chat',
     icon: ChatDotRound,
   },
@@ -95,7 +92,6 @@ onBeforeMount(() => {
         <div class="section-header">
           <div>
             <h2 class="card-heading">快速开始</h2>
-            <p class="muted-text">从下面的入口开始使用搜索、推荐和聊天功能。</p>
           </div>
         </div>
 
@@ -113,7 +109,6 @@ onBeforeMount(() => {
           </div>
           <div class="shortcut-copy">
             <strong>{{ item.title }}</strong>
-            <span>{{ item.desc }}</span>
           </div>
         </button>
       </div>
@@ -172,20 +167,12 @@ onBeforeMount(() => {
 }
 
 .shortcut-copy {
-  display: flex;
-  flex-direction: column;
-  gap: 6px;
   text-align: left;
 }
 
 .shortcut-copy strong {
   font-size: 15px;
   color: #0f172a;
-}
-
-.shortcut-copy span {
-  color: #64748b;
-  line-height: 1.7;
 }
 
 @media (max-width: 960px) {

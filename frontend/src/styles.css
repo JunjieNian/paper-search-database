@@ -259,14 +259,6 @@ textarea {
   line-height: 1.08;
 }
 
-.auth-showcase p {
-  margin: 0;
-  max-width: 520px;
-  font-size: 16px;
-  line-height: 1.8;
-  color: rgba(255, 255, 255, 0.82);
-}
-
 .auth-feature-list {
   display: grid;
   grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
@@ -285,14 +277,7 @@ textarea {
 
 .auth-feature-item strong {
   display: block;
-  margin-bottom: 6px;
   font-size: 15px;
-}
-
-.auth-feature-item span {
-  color: rgba(255, 255, 255, 0.76);
-  font-size: 14px;
-  line-height: 1.6;
 }
 
 .auth-panel {

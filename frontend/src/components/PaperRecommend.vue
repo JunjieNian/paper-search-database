@@ -48,7 +48,6 @@ onMounted(() => {
       <div class="section-header">
         <div>
           <h2 class="card-heading">推荐结果</h2>
-          <p class="muted-text">点击任意一行可继续查看论文详情。</p>
         </div>
         <el-button plain @click="router.push('/index/paperSearch')">
           去搜索论文
@@ -56,15 +55,7 @@ onMounted(() => {
       </div>
 
       <div v-if="!loading && !hasClicks" class="empty-tip">
-        <el-empty description="暂无推荐">
-          <template #description>
-            <p class="tip-text">
-              你还没有浏览过论文。先前往
-              <el-link type="primary" @click="router.push('/index/paperSearch')">论文搜索</el-link>
-              页面搜索并点击论文，系统才会生成更有针对性的推荐。
-            </p>
-          </template>
-        </el-empty>
+        <el-empty description="暂无推荐" />
       </div>
 
       <div v-else-if="papers.length > 0" class="recommend-list">
@@ -112,12 +103,6 @@ onMounted(() => {
 <style scoped>
 .empty-tip {
   margin-top: 26px;
-}
-
-.tip-text {
-  color: #64748b;
-  font-size: 14px;
-  line-height: 1.8;
 }
 
 .clickable-table :deep(tbody tr) {

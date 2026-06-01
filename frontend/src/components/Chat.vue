@@ -356,7 +356,6 @@ onMounted(() => {
         <div class="chat-toolbar">
           <div>
             <h2 class="card-heading">{{ activeConversation?.title || '新对话' }}</h2>
-            <p class="muted-text">围绕当前主题继续提问，或随时重新开始。</p>
           </div>
           <el-button plain :disabled="loading" @click="resetCurrentConversation">
             清空当前对话

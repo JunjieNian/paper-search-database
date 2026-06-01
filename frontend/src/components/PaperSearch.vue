@@ -2,7 +2,7 @@
 import {onMounted, ref, watch} from 'vue'
 import {useRouter} from 'vue-router'
 import {ElMessage} from 'element-plus'
-import {InfoFilled, Link, Search} from '@element-plus/icons-vue'
+import {Link, Search} from '@element-plus/icons-vue'
 import {GetSearchHistory, RecordClick, SearchPapers} from '@/request/api'
 
 const router = useRouter()
@@ -118,7 +118,6 @@ onMounted(() => {
       <div class="section-header">
         <div>
           <h2 class="card-heading">论文搜索</h2>
-          <p class="muted-text">支持回车搜索，点击表格行可以进入论文详情。</p>
         </div>
         <div v-if="searched && total > 0" class="result-summary">
           共找到 {{ total }} 篇相关论文
@@ -145,15 +144,9 @@ onMounted(() => {
         <div class="rerank-panel">
           <div class="rerank-copy">
             <strong>启用 Qwen Rerank</strong>
-            <span>相关性通常更好，但搜索会明显变慢。</span>
           </div>
           <el-switch v-model="rerankEnabled" inline-prompt active-text="开" inactive-text="关" />
         </div>
-      </div>
-
-      <div class="rerank-tip">
-        <el-icon><InfoFilled /></el-icon>
-        <span>这是实验功能开关。关闭时走基础向量检索；开启时走“向量召回 + qwen3-rerank 精排”。</span>
       </div>
 
       <div class="history-tags" v-if="searchHistory.length > 0">
@@ -256,27 +249,11 @@ onMounted(() => {
 .rerank-copy {
   display: flex;
   flex-direction: column;
-  gap: 4px;
 }
 
 .rerank-copy strong {
   font-size: 14px;
   color: #0f172a;
-}
-
-.rerank-copy span {
-  font-size: 12px;
-  line-height: 1.6;
-  color: #64748b;
-}
-
-.rerank-tip {
-  display: flex;
-  align-items: center;
-  gap: 8px;
-  margin-bottom: 12px;
-  color: #64748b;
-  font-size: 13px;
 }
 
 .example-tags {

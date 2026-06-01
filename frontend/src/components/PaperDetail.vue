@@ -160,7 +160,6 @@ onUnmounted(() => {
       <div class="section-header">
         <div>
           <h2 class="card-heading">论文信息</h2>
-          <p class="muted-text">这里展示元数据和可跳转链接。</p>
         </div>
       </div>
 
@@ -187,7 +186,6 @@ onUnmounted(() => {
       <div class="section-header">
         <div>
           <h2 class="card-heading">摘要</h2>
-          <p class="muted-text">已尽量使用更真实、更完整的论文摘要文本。</p>
         </div>
       </div>
       <p class="abstract-text">{{ paper.abstract }}</p>
@@ -197,7 +195,6 @@ onUnmounted(() => {
       <div class="section-header">
         <div>
           <h2 class="card-heading">论文全文</h2>
-          <p class="muted-text">在线阅读 PDF 全文。</p>
         </div>
       </div>
 
@@ -210,7 +207,6 @@ onUnmounted(() => {
       <div v-else class="pdf-fallback">
         <el-empty description="暂无本地 PDF">
           <template #description>
-            <p>该论文暂未收录 PDF 全文。</p>
             <el-link
               v-if="paper.url"
               :href="paper.url"
@@ -230,7 +226,6 @@ onUnmounted(() => {
       <div class="section-header">
         <div>
           <h2 class="card-heading">AI 论文问答</h2>
-          <p class="muted-text">基于论文全文内容的智能问答，可以问任何关于这篇论文的问题。</p>
         </div>
       </div>
 

@@ -119,18 +119,30 @@ def fig_latency_breakdown():
     values = [data["embedding_ms"]["mean"],
               data["retrieval_ms"]["mean"],
               data["rerank_ms"]["mean"]]
-    colors = COLORS[:3]
+    total = sum(values)
+    percents = [v / total * 100 for v in values]
 
-    fig, ax = plt.subplots(figsize=(5, 3.5))
-    wedges, texts, autotexts = ax.pie(
-        values, labels=stages, autopct=lambda p: f"{p:.1f}%\n({p * sum(values) / 100:.1f}ms)",
-        colors=colors, startangle=90,
-        pctdistance=0.6, textprops={"fontsize": 9},
-        wedgeprops={"edgecolor": "white", "linewidth": 1.5},
-    )
-    for t in autotexts:
-        t.set_fontsize(7.5)
-    ax.set_title(f"搜索延迟分解（总计 {sum(values):.1f} ms）", fontsize=11, pad=10)
+    fig, ax = plt.subplots(figsize=(6.2, 3.3))
+    y = np.arange(len(stages))
+    bars = ax.barh(y, values, color=COLORS[:3], edgecolor="white", linewidth=0.8)
+
+    max_val = max(values)
+    for bar, value, pct in zip(bars, values, percents):
+        x = bar.get_width()
+        label = f"{value:.1f} ms ({pct:.1f}%)"
+        if x > max_val * 0.22:
+            ax.text(x - max_val * 0.02, bar.get_y() + bar.get_height() / 2,
+                    label, ha="right", va="center", fontsize=8, color="white", fontweight="bold")
+        else:
+            ax.text(x + max_val * 0.02, bar.get_y() + bar.get_height() / 2,
+                    label, ha="left", va="center", fontsize=8, color="#334155")
+
+    ax.set_yticks(y)
+    ax.set_yticklabels(stages, fontsize=9)
+    ax.invert_yaxis()
+    ax.set_xlabel("延迟 (ms)")
+    ax.set_title(f"搜索延迟分解（总计 {total:.1f} ms）", fontsize=11, pad=8)
+    ax.xaxis.set_major_locator(mticker.MaxNLocator(6))
     fig.tight_layout()
     fig.savefig(OUTDIR / "latency_breakdown.pdf")
     plt.close(fig)
@@ -194,10 +206,14 @@ def fig_reranker_tradeoff():
             h = bar.get_height()
             ax1.text(bar.get_x() + bar.get_width() / 2, h + 0.005,
                      f"{h:.3f}", ha="center", va="bottom", fontsize=7)
+    quality_vals = [data[k][m] for k in keys for m in quality_metrics]
+    q_min = min(quality_vals)
+    q_max = max(quality_vals)
+    margin = max(0.01, (q_max - q_min) * 0.8)
     ax1.set_ylabel("Score")
     ax1.set_xticks(x)
     ax1.set_xticklabels(labels, fontsize=7.5)
-    ax1.set_ylim(0.85, 0.98)
+    ax1.set_ylim(max(0, q_min - margin), min(1.0, q_max + margin * 0.6))
     ax1.legend(frameon=False, fontsize=8)
     ax1.set_title("检索质量", fontsize=10)
 

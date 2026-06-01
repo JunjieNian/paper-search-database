@@ -49,7 +49,6 @@ function jumpToLogin() {
     <div class="form-copy">
       <p class="form-eyebrow">Create Account</p>
       <h2>注册账号</h2>
-      <p>只需要填写基本信息，就可以开始使用论文搜索与 AI 助手。</p>
     </div>
 
     <el-form ref="ruleFormRef" :model="registerForm" label-position="top" class="auth-form">
@@ -105,12 +104,6 @@ function jumpToLogin() {
   margin: 0;
   font-size: 28px;
   color: #0f172a;
-}
-
-.form-copy p {
-  margin: 10px 0 0;
-  color: #64748b;
-  line-height: 1.8;
 }
 
 .auth-form :deep(.el-form-item__label) {

@@ -53,7 +53,6 @@ const menuItems = [
         <div class="sidebar-logo">PS</div>
         <div v-if="!collapsed" class="sidebar-copy">
           <h2>Paper Search</h2>
-          <p>论文搜索、推荐与问答</p>
         </div>
       </div>
       <button
@@ -83,10 +82,6 @@ const menuItems = [
         <span>{{ item.label }}</span>
       </el-menu-item>
     </el-menu>
-
-    <div v-if="!collapsed" class="sidebar-footer">
-      <p>选择一个功能开始使用。</p>
-    </div>
   </div>
 </template>
 
@@ -170,33 +165,11 @@ const menuItems = [
   color: #fff;
 }
 
-.sidebar-copy p {
-  margin: 0;
-  color: rgba(226, 232, 240, 0.75);
-  font-size: 13px;
-  line-height: 1.6;
-}
-
 .sidebar-menu {
   flex: 1;
   border-right: none;
   background: transparent;
   min-width: 0;
-}
-
-.sidebar-footer {
-  margin-top: 22px;
-  padding: 16px;
-  border-radius: 20px;
-  background: rgba(255, 255, 255, 0.08);
-  border: 1px solid rgba(255, 255, 255, 0.12);
-}
-
-.sidebar-footer p {
-  margin: 0;
-  font-size: 12px;
-  line-height: 1.7;
-  color: rgba(226, 232, 240, 0.74);
 }
 
 :deep(.el-menu) {
