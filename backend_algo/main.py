@@ -153,3 +153,22 @@ async def index_papers(req: schemas.IndexRequest):
     papers = [paper.model_dump() for paper in req.papers]
     count = vector_store.index_papers(papers)
     return schemas.IndexResponse(indexed_count=count)
+
+
+@app.post("/index-chunks", response_model=schemas.IndexResponse)
+async def index_chunks(req: schemas.ChunkIndexRequest):
+    chunks = [c.model_dump() for c in req.chunks]
+    count = vector_store.index_chunks(chunks)
+    return schemas.IndexResponse(indexed_count=count)
+
+
+@app.post("/search-chunks", response_model=schemas.ChunkSearchResponse)
+async def search_chunks(req: schemas.ChunkSearchRequest):
+    results = vector_store.search_chunks(
+        query=req.query,
+        top_k=req.top_k,
+        paper_id=req.paper_id,
+    )
+    return schemas.ChunkSearchResponse(
+        results=[schemas.ChunkSearchResult(**r) for r in results]
+    )

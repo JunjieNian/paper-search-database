@@ -1,7 +1,17 @@
 <script setup lang="ts">
-import {ChatDotRound, Search, Star, UserFilled} from '@element-plus/icons-vue'
+import {ArrowLeftBold, ArrowRightBold, ChatDotRound, Search, Star, UserFilled} from '@element-plus/icons-vue'
 import {computed} from 'vue'
 import {useRoute} from 'vue-router'
+
+withDefaults(defineProps<{
+  collapsed?: boolean
+}>(), {
+  collapsed: false,
+})
+
+const emit = defineEmits<{
+  (e: 'toggle-collapse'): void
+}>()
 
 const route = useRoute()
 
@@ -37,17 +47,36 @@ const menuItems = [
 </script>
 
 <template>
-  <div class="sidebar">
-    <div class="sidebar-intro">
-      <div class="sidebar-logo">PS</div>
-      <div class="sidebar-copy">
-        <h2>Paper Search</h2>
-        <p>聚焦论文搜索、推荐与问答，隐藏无关的用户管理入口。</p>
+  <div class="sidebar" :class="{ 'sidebar--collapsed': collapsed }">
+    <div class="sidebar-toolbar">
+      <div class="sidebar-intro">
+        <div class="sidebar-logo">PS</div>
+        <div v-if="!collapsed" class="sidebar-copy">
+          <h2>Paper Search</h2>
+          <p>论文搜索、推荐与问答</p>
+        </div>
       </div>
+      <button
+          type="button"
+          class="collapse-button"
+          :aria-label="collapsed ? '展开侧栏' : '收起侧栏'"
+          @click="emit('toggle-collapse')"
+      >
+        <el-icon>
+          <ArrowRightBold v-if="collapsed" />
+          <ArrowLeftBold v-else />
+        </el-icon>
+      </button>
     </div>
 
-    <el-menu :default-active="activeMenu" class="sidebar-menu" :router="true">
-      <el-menu-item v-for="item in menuItems" :key="item.index" :index="item.index">
+    <el-menu
+        :default-active="activeMenu"
+        class="sidebar-menu"
+        :router="true"
+        :collapse="collapsed"
+        :collapse-transition="false"
+    >
+      <el-menu-item v-for="item in menuItems" :key="item.index" :index="item.index" :title="item.label">
         <el-icon>
           <component :is="item.icon" />
         </el-icon>
@@ -55,8 +84,8 @@ const menuItems = [
       </el-menu-item>
     </el-menu>
 
-    <div class="sidebar-footer">
-      <p>主导航现在只保留核心功能，避免“添加用户”之类的干扰项。</p>
+    <div v-if="!collapsed" class="sidebar-footer">
+      <p>选择一个功能开始使用。</p>
     </div>
   </div>
 </template>
@@ -69,13 +98,56 @@ const menuItems = [
   padding: 24px 18px;
   background: linear-gradient(180deg, #0f172a 0%, #172554 58%, #1d4ed8 100%);
   color: #e2e8f0;
+  transition: padding 0.24s ease;
+}
+
+.sidebar--collapsed {
+  padding: 24px 12px;
+}
+
+.sidebar-toolbar {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 12px;
+}
+
+.sidebar--collapsed .sidebar-toolbar {
+  flex-direction: column;
+  align-items: center;
+}
+
+.collapse-button {
+  width: 38px;
+  height: 38px;
+  flex-shrink: 0;
+  border: 1px solid rgba(255, 255, 255, 0.16);
+  border-radius: 14px;
+  background: rgba(255, 255, 255, 0.08);
+  color: #fff;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+  transition: all 0.2s ease;
+}
+
+.collapse-button:hover {
+  background: rgba(255, 255, 255, 0.16);
+  transform: translateY(-1px);
 }
 
 .sidebar-intro {
   display: flex;
   gap: 14px;
   align-items: flex-start;
+  flex: 1;
   padding: 6px 10px 24px;
+}
+
+.sidebar--collapsed .sidebar-intro {
+  flex: none;
+  padding: 6px 0 12px;
 }
 
 .sidebar-logo {
@@ -109,6 +181,7 @@ const menuItems = [
   flex: 1;
   border-right: none;
   background: transparent;
+  min-width: 0;
 }
 
 .sidebar-footer {
@@ -146,5 +219,18 @@ const menuItems = [
   color: #fff;
   background: linear-gradient(135deg, rgba(59, 130, 246, 0.9), rgba(124, 58, 237, 0.9));
   box-shadow: 0 12px 26px rgba(37, 99, 235, 0.24);
+}
+
+:deep(.el-menu--collapse) {
+  border-right: none;
+}
+
+:deep(.el-menu--collapse .el-menu-item) {
+  justify-content: center;
+  padding: 0;
+}
+
+:deep(.el-menu--collapse .el-menu-item .el-icon) {
+  margin-right: 0;
 }
 </style>

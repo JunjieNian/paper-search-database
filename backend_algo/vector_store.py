@@ -8,6 +8,7 @@ from config import (
     CHROMA_HOST,
     CHROMA_PERSIST_DIR,
     CHROMA_PORT,
+    CHUNK_COLLECTION_NAME,
     COLLECTION_NAME,
     EMBEDDING_API_KEY,
     EMBEDDING_BASE_URL,
@@ -138,3 +139,70 @@ def get_embeddings_by_ids(paper_ids: list[str]):
     collection = get_collection()
     results = collection.get(ids=paper_ids, include=["embeddings"])
     return results.get("embeddings", [])
+
+
+# ---- Chunk collection (paper full-text chunks) ----
+
+
+def get_chunk_collection():
+    client = get_client()
+    try:
+        return client.get_collection(name=CHUNK_COLLECTION_NAME)
+    except Exception:
+        return client.create_collection(
+            name=CHUNK_COLLECTION_NAME,
+            metadata={"hnsw:space": "cosine"},
+        )
+
+
+def _truncate_for_embedding(text: str, max_chars: int = 8000) -> str:
+    """Truncate text to fit within embedding API input limits (~8192 tokens).
+    Conservative char limit as safety net since some PDFs contain long encoded
+    strings that tokenize into many tokens.
+    """
+    if len(text) <= max_chars:
+        return text
+    return text[:max_chars]
+
+
+def index_chunks(chunks: list[dict]):
+    """批量索引论文分块到 ChromaDB。
+    chunks: list of dict with keys: chunk_id, paper_id, chunk_index, text
+    """
+    if not chunks:
+        return 0
+    collection = get_chunk_collection()
+    ids = [c["chunk_id"] for c in chunks]
+    documents = [_truncate_for_embedding(c["text"]) for c in chunks]
+    metadatas = [{"paper_id": c["paper_id"], "chunk_index": c["chunk_index"]} for c in chunks]
+    embeddings = embed_texts(documents)
+    collection.upsert(ids=ids, documents=documents, embeddings=embeddings, metadatas=metadatas)
+    return len(ids)
+
+
+def search_chunks(query: str, top_k: int = 5, paper_id: int | None = None):
+    """检索论文分块。paper_id=None 时全库搜索，否则按 paper_id 过滤。"""
+    collection = get_chunk_collection()
+    query_embedding = embed_texts([query])[0]
+    where_filter = {"paper_id": paper_id} if paper_id is not None else None
+    results = collection.query(
+        query_embeddings=[query_embedding],
+        n_results=top_k,
+        include=["documents", "distances", "metadatas"],
+        where=where_filter,
+    )
+    ids = results["ids"][0] if results["ids"] else []
+    documents = results["documents"][0] if results["documents"] else []
+    distances = results["distances"][0] if results["distances"] else []
+    metadatas = results["metadatas"][0] if results["metadatas"] else []
+
+    output = []
+    for cid, doc, dist, meta in zip(ids, documents, distances, metadatas):
+        score = 1.0 / (1.0 + dist)
+        output.append({
+            "chunk_id": cid,
+            "paper_id": meta.get("paper_id", 0),
+            "text": doc,
+            "score": score,
+        })
+    return output

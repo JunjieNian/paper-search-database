@@ -43,6 +43,8 @@ class ChatMessage(BaseModel):
 
 class ChatStreamRequest(BaseModel):
     messages: List[ChatMessage]
+    paper_id: Optional[int] = None   # paper Q&A mode
+    use_rag: bool = True             # RAG mode (ignored when paper_id is set)
 
 
 class PaperBase(BaseModel):
@@ -61,6 +63,7 @@ class PaperCreate(PaperBase):
 
 class Paper(PaperBase):
     id: int
+    has_pdf: bool = False
     created_at: Optional[datetime] = None
 
     class Config:
@@ -75,6 +78,7 @@ class PaperBrief(BaseModel):
     year: int
     keywords: str
     url: str = ""
+    has_pdf: bool = False
 
     class Config:
         from_attributes = True

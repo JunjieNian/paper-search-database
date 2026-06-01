@@ -78,24 +78,40 @@ interface ChatMsg {
     content: string
 }
 
+export interface ChatReference {
+    id: number
+    title: string
+}
+
+export interface ChatStreamOptions {
+    paperId?: number
+    useRag?: boolean
+}
+
 export async function ChatStream(
     messages: ChatMsg[],
     onChunk: (text: string) => void,
-    onDone: () => void,
+    onDone: (refs?: ChatReference[]) => void,
+    options?: ChatStreamOptions,
 ) {
     const token = localStorage.getItem('token') || ''
+    const body: Record<string, any> = {messages}
+    if (options?.paperId != null) body.paper_id = options.paperId
+    if (options?.useRag !== undefined) body.use_rag = options.useRag
+
     const resp = await fetch('/api/chat/stream', {
         method: 'POST',
         headers: {
             'Content-Type': 'application/json',
             'Authorization': `Bearer ${token}`,
         },
-        body: JSON.stringify({messages}),
+        body: JSON.stringify(body),
     })
     if (!resp.ok) throw new Error(`HTTP ${resp.status}`)
     const reader = resp.body!.getReader()
     const decoder = new TextDecoder()
     let buffer = ''
+    let references: ChatReference[] | undefined
     while (true) {
         const {done, value} = await reader.read()
         if (done) break
@@ -108,11 +124,16 @@ export async function ChatStream(
             if (trimmed.startsWith('data: ')) {
                 const data = trimmed.slice(6)
                 if (data === '[DONE]') {
-                    onDone()
+                    onDone(references)
                     return
                 }
                 try {
                     const parsed = JSON.parse(data)
+                    // Check if this is a references payload
+                    if (parsed.references && Array.isArray(parsed.references)) {
+                        references = parsed.references
+                        continue
+                    }
                     const content = parsed.choices?.[0]?.delta?.content
                     if (content) onChunk(content)
                 } catch {
@@ -121,7 +142,7 @@ export async function ChatStream(
             }
         }
     }
-    onDone()
+    onDone(references)
 }
 
 interface PaperBrief {
@@ -132,6 +153,7 @@ interface PaperBrief {
     year: number
     keywords: string
     url: string
+    has_pdf: boolean
 }
 
 interface PaperDetail {
@@ -143,6 +165,7 @@ interface PaperDetail {
     year: number
     keywords: string
     url: string
+    has_pdf: boolean
     created_at: string | null
 }
 

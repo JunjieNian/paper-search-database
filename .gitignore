@@ -153,6 +153,9 @@ experiments/**/*.pyc
 # Local runtime state
 .run/
 
+# PDF store (binary files, downloaded per-instance)
+backend/pdf_store/
+
 # LaTeX build artifacts
 report/build/
 *.aux

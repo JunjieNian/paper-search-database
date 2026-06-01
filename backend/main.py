@@ -1,9 +1,10 @@
+import json as _json
 from datetime import datetime, timedelta, timezone
 from typing import Annotated
 
 import jwt
-from fastapi import Depends, FastAPI, HTTPException, status
-from fastapi.responses import StreamingResponse
+from fastapi import Depends, FastAPI, HTTPException, UploadFile, status
+from fastapi.responses import FileResponse, StreamingResponse
 from fastapi.security import OAuth2PasswordBearer, OAuth2PasswordRequestForm
 from jwt.exceptions import InvalidTokenError
 from pydantic import BaseModel
@@ -15,7 +16,13 @@ from database import SessionLocal, engine
 from security import verify_password
 
 import os
+from pathlib import Path
+
 import requests
+
+PDF_STORE = Path(__file__).resolve().parent / "pdf_store"
+PDF_STORE.mkdir(exist_ok=True)
+MAX_PDF_SIZE = 50 * 1024 * 1024  # 50 MB
 
 
 # to get a string like this run:
@@ -210,6 +217,15 @@ SYSTEM_PROMPT = (
     "- 回答要有条理，适当使用 Markdown 格式（列表、加粗、代码块等）\n"
 )
 
+PAPER_QA_SYSTEM_PROMPT = (
+    "你是学术论文阅读助手。用户正在阅读一篇论文，你已经获得了论文的全文片段。\n"
+    "请基于提供的论文内容片段回答用户的问题。如果片段中没有足够信息，请如实说明。\n\n"
+    "## 回答要求\n"
+    "- 用中文回答，技术术语保留英文原文并附中文解释\n"
+    "- 回答要有条理，适当使用 Markdown 格式\n"
+    "- 仅基于提供的论文内容回答，不要编造论文中没有的信息\n"
+)
+
 
 def _build_paper_context(db, user_id: int, max_papers: int = 5) -> str:
     """构建用户最近阅读的论文上下文"""
@@ -238,15 +254,103 @@ def _build_paper_context(db, user_id: int, max_papers: int = 5) -> str:
     return "\n".join(context_parts)
 
 
+def _search_chunks(query: str, top_k: int = 5, paper_id: int | None = None) -> list[dict]:
+    """调用 algo 层 search-chunks，返回 chunk 列表。"""
+    try:
+        payload: dict = {"query": query, "top_k": top_k}
+        if paper_id is not None:
+            payload["paper_id"] = paper_id
+        resp = requests.post(f"{ALGO_URL}/search-chunks", json=payload, timeout=30)
+        resp.raise_for_status()
+        return resp.json().get("results", [])
+    except Exception:
+        return []
+
+
+def _build_paper_qa_context(query: str, paper_id: int, db) -> str:
+    """构建论文问答的上下文（检索该论文内的全文分块）。"""
+    paper = crud.get_paper(db, paper_id)
+    chunks = _search_chunks(query, top_k=5, paper_id=paper_id)
+
+    parts = []
+    if paper:
+        parts.append(
+            f"## 论文信息\n"
+            f"- **标题**: {paper.title}\n"
+            f"- **作者**: {paper.authors}\n"
+            f"- **会议/期刊**: {paper.venue} {paper.year}\n"
+            f"- **摘要**: {paper.abstract}\n"
+        )
+
+    if chunks:
+        parts.append("## 论文全文相关片段\n")
+        for i, c in enumerate(chunks, 1):
+            parts.append(f"### 片段 {i}\n{c['text']}\n")
+
+    return "\n".join(parts)
+
+
+def _build_rag_context(query: str, db) -> tuple[str, list[dict]]:
+    """构建 RAG 全库检索上下文，返回 (context_str, references)。"""
+    chunks = _search_chunks(query, top_k=8)
+    if not chunks:
+        return "", []
+
+    # 按 paper_id 聚合
+    paper_chunks: dict[int, list[dict]] = {}
+    for c in chunks:
+        pid = c["paper_id"]
+        paper_chunks.setdefault(pid, []).append(c)
+
+    # 获取论文元信息
+    paper_ids = list(paper_chunks.keys())
+    db_papers = crud.get_papers_by_ids(db, paper_ids)
+    paper_map = {p.id: p for p in db_papers}
+
+    parts = ["## 检索到的相关论文内容\n"]
+    references = []
+    for pid in paper_ids:
+        p = paper_map.get(pid)
+        if not p:
+            continue
+        references.append({"id": pid, "title": p.title})
+        parts.append(f"### {p.title} ({p.authors}, {p.venue} {p.year})\n")
+        for c in paper_chunks[pid]:
+            parts.append(f"{c['text']}\n")
+        parts.append("")
+
+    return "\n".join(parts), references
+
+
 @app.post("/chat/stream")
 async def chat_stream(
         current_user: Annotated[schemas.User, Depends(get_current_active_user)],
         chat_request: schemas.ChatStreamRequest,
         db: SessionDep,
 ):
-    # 构建包含论文上下文的系统提示
-    paper_context = _build_paper_context(db, user_id=current_user.id)
-    system_content = SYSTEM_PROMPT + paper_context
+    user_query = ""
+    for m in reversed(chat_request.messages):
+        if m.role == "user" and m.content.strip():
+            user_query = m.content.strip()
+            break
+
+    references: list[dict] = []
+
+    if chat_request.paper_id is not None:
+        # Mode A: Paper Q&A
+        qa_context = _build_paper_qa_context(user_query, chat_request.paper_id, db)
+        system_content = PAPER_QA_SYSTEM_PROMPT + "\n" + qa_context
+    elif chat_request.use_rag and user_query:
+        # Mode B: RAG full library
+        rag_context, references = _build_rag_context(user_query, db)
+        paper_context = _build_paper_context(db, user_id=current_user.id)
+        system_content = SYSTEM_PROMPT + paper_context
+        if rag_context:
+            system_content += "\n" + rag_context
+    else:
+        # Mode C: Plain chat (original logic)
+        paper_context = _build_paper_context(db, user_id=current_user.id)
+        system_content = SYSTEM_PROMPT + paper_context
 
     messages = [{"role": "system", "content": system_content}]
     for m in chat_request.messages:
@@ -261,6 +365,10 @@ async def chat_stream(
         ) as resp:
             for raw_line in resp.iter_lines():
                 yield raw_line + b"\n"
+        # After the LLM stream completes, send references if any
+        if references:
+            ref_data = _json.dumps({"references": references}, ensure_ascii=False)
+            yield f"data: {ref_data}\n".encode("utf-8")
 
     return StreamingResponse(generator(), media_type="text/event-stream")
 
@@ -416,3 +524,53 @@ async def get_search_history(
 ):
     history = crud.get_search_history(db, user_id=current_user.id)
     return schemas.SearchHistoryList(items=history)
+
+
+# ---- PDF endpoints ----
+
+
+@app.get("/papers/{paper_id}/pdf")
+async def get_paper_pdf(
+        current_user: Annotated[schemas.User, Depends(get_current_active_user)],
+        paper_id: int,
+        db: SessionDep,
+):
+    paper = crud.get_paper(db, paper_id)
+    if not paper:
+        raise HTTPException(status_code=404, detail="Paper not found")
+    pdf_path = PDF_STORE / f"{paper_id}.pdf"
+    if not pdf_path.is_file():
+        raise HTTPException(status_code=404, detail="PDF not found")
+    return FileResponse(
+        pdf_path,
+        media_type="application/pdf",
+        headers={"Content-Disposition": f'inline; filename="{paper_id}.pdf"'},
+    )
+
+
+@app.post("/papers/{paper_id}/upload-pdf")
+async def upload_paper_pdf(
+        current_user: Annotated[schemas.User, Depends(get_current_active_user)],
+        paper_id: int,
+        file: UploadFile,
+        db: SessionDep,
+):
+    if not current_user.is_superuser:
+        raise HTTPException(status_code=403, detail="Only superuser can upload PDFs")
+    paper = crud.get_paper(db, paper_id)
+    if not paper:
+        raise HTTPException(status_code=404, detail="Paper not found")
+    if file.content_type != "application/pdf":
+        raise HTTPException(status_code=400, detail="File must be a PDF")
+    pdf_path = PDF_STORE / f"{paper_id}.pdf"
+    size = 0
+    with open(pdf_path, "wb") as f:
+        while chunk := await file.read(1024 * 1024):
+            size += len(chunk)
+            if size > MAX_PDF_SIZE:
+                pdf_path.unlink(missing_ok=True)
+                raise HTTPException(status_code=400, detail="File too large (max 50MB)")
+            f.write(chunk)
+    paper.has_pdf = True
+    db.commit()
+    return {"status": "ok"}

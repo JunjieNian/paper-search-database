@@ -42,9 +42,6 @@ onMounted(() => {
     <section class="page-hero">
       <p class="page-eyebrow">Personalized Recommendation</p>
       <h1 class="hero-title">根据浏览记录推荐相关论文</h1>
-      <p class="hero-description">
-        推荐结果会优先参考你最近点击查看的论文内容。如果当前为空，先去搜索并打开几篇论文即可。
-      </p>
     </section>
 
     <section class="page-card" v-loading="loading">
@@ -83,6 +80,11 @@ onMounted(() => {
           <el-table-column prop="venue" label="会议/期刊" width="150" />
           <el-table-column prop="year" label="年份" width="90" />
           <el-table-column prop="keywords" label="关键词" min-width="220" show-overflow-tooltip />
+          <el-table-column label="PDF" width="70" align="center">
+            <template #default="{ row }">
+              <el-tag v-if="row.has_pdf" type="success" size="small">PDF</el-tag>
+            </template>
+          </el-table-column>
           <el-table-column label="链接" width="80" align="center">
             <template #default="{ row }">
               <a

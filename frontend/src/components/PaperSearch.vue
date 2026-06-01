@@ -100,9 +100,6 @@ onMounted(() => {
     <section class="page-hero">
       <p class="page-eyebrow">Academic Retrieval</p>
       <h1 class="hero-title">语义搜索数据库相关论文</h1>
-      <p class="hero-description">
-        输入研究主题、方法名、问题场景或关键词组合，系统会基于论文标题、摘要和关键词返回更相关的结果。
-      </p>
       <div class="example-tags">
         <span>试试这些主题：</span>
         <el-tag
@@ -195,6 +192,11 @@ onMounted(() => {
           <el-table-column prop="venue" label="会议/期刊" width="150" />
           <el-table-column prop="year" label="年份" width="90" />
           <el-table-column prop="keywords" label="关键词" min-width="220" show-overflow-tooltip />
+          <el-table-column label="PDF" width="70" align="center">
+            <template #default="{ row }">
+              <el-tag v-if="row.has_pdf" type="success" size="small">PDF</el-tag>
+            </template>
+          </el-table-column>
           <el-table-column label="链接" width="80" align="center">
             <template #default="{ row }">
               <a

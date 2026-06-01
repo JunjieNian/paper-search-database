@@ -7,10 +7,10 @@ import LoginForm from '@/components/LoginForm.vue'
     <div class="auth-layout">
       <section class="auth-showcase">
         <div>
-          <span class="auth-showcase-badge">Academic Demo</span>
+          <span class="auth-showcase-badge">Academic Search</span>
           <h1>Paper Search Assistant</h1>
           <p>
-            一个更聚焦的论文搜索系统前端，支持语义检索、个性化推荐和带会话记录的 AI 助手。
+            面向学术论文检索、推荐与问答的系统，支持语义搜索、个性化推荐和 AI 助手。
           </p>
         </div>
 
@@ -25,7 +25,7 @@ import LoginForm from '@/components/LoginForm.vue'
           </li>
           <li class="auth-feature-item">
             <strong>聊天助手</strong>
-            <span>支持保存会话记录，回来后继续上次对话。</span>
+            <span>围绕论文内容、研究方向和检索思路进行问答。</span>
           </li>
         </ul>
       </section>

@@ -22,7 +22,7 @@ async function logout() {
       <div class="brand-badge">PS</div>
       <div>
         <p class="brand-title">Paper Search Assistant</p>
-        <p class="brand-subtitle">论文检索、推荐与 AI 助手的一体化前端</p>
+        <p class="brand-subtitle">论文检索、推荐与 AI 助手</p>
       </div>
     </div>
 

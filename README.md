@@ -544,6 +544,48 @@ bash start_all.sh     # 启动全部服务
 bash stop_all.sh      # 停止全部服务
 ```
 
+> 说明：`start_all.sh` / `stop_all.sh` 负责前端、业务层和算法层；MySQL 需要先确保已经启动。
+
+### 这台机器上的一键启动
+
+当前机器已经准备好了用户态 MySQL，路径固定为：
+
+- MySQL 启动脚本：`/datacenter/ALEX_undergraduate/workspaces/njj20060901/mysql-run/start.sh`
+- MySQL 停止脚本：`/datacenter/ALEX_undergraduate/workspaces/njj20060901/mysql-run/stop.sh`
+- 项目目录：`/datacenter/ALEX_undergraduate/workspaces/njj20060901/academic/database/mysql_fastapi_vue_project`
+
+推荐直接在项目根目录执行下面这组命令：
+
+```bash
+cd /datacenter/ALEX_undergraduate/workspaces/njj20060901/academic/database/mysql_fastapi_vue_project
+
+# 如 8000 / 8003 / 5173 已被旧进程占用，先清掉
+for port in 8000 8003 5173; do
+  fuser -k -n tcp "$port" 2>/dev/null || true
+done
+
+# 启动本机 MySQL
+/datacenter/ALEX_undergraduate/workspaces/njj20060901/mysql-run/start.sh
+
+# 启动前端 + 业务层 + 算法层，并监听 0.0.0.0
+ALGO_HOST=0.0.0.0 BACKEND_HOST=0.0.0.0 FRONTEND_HOST=0.0.0.0 ./start_all.sh
+```
+
+停止命令：
+
+```bash
+cd /datacenter/ALEX_undergraduate/workspaces/njj20060901/academic/database/mysql_fastapi_vue_project
+./stop_all.sh
+/datacenter/ALEX_undergraduate/workspaces/njj20060901/mysql-run/stop.sh
+```
+
+启动完成后可访问：
+
+- 前端：`http://127.0.0.1:5173`
+- 前端（局域网）：`http://<本机IP>:5173`
+- 业务层文档：`http://127.0.0.1:8000/docs`
+- 算法层文档：`http://127.0.0.1:8003/docs`
+
 ### 新机器从零启动
 
 1. 克隆仓库并安装依赖：

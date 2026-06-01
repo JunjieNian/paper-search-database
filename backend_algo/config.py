@@ -64,6 +64,7 @@ CHROMA_PERSIST_DIR = _env_str(
 CHROMA_HOST = _env_str("CHROMA_HOST", "localhost")
 CHROMA_PORT = _env_int("CHROMA_PORT", 8002)
 COLLECTION_NAME = _env_str("COLLECTION_NAME", "papers")
+CHUNK_COLLECTION_NAME = _env_str("CHUNK_COLLECTION_NAME", "paper_chunks")
 
 RERANK_ENABLED = _env_bool("RERANK_ENABLED", False)
 RERANK_PROVIDER = _env_str("RERANK_PROVIDER", "qwen").lower()

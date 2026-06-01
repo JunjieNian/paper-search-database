@@ -11,6 +11,7 @@
 
 % ── 图表 ────────────────────────────────────────────
 \usepackage{graphicx}
+\graphicspath{{figures/}}
 \usepackage{float}
 \usepackage{booktabs}
 \usepackage{multirow}
@@ -103,7 +104,7 @@
 
 \subsection{项目背景}
 
-随着学术论文数量的爆炸式增长，研究者在海量文献中高效检索并发现有价值的论文成为一项重要需求。传统的关键词匹配搜索仅能捕获字面重合，无法理解查询的语义意图。本项目面向数据库与数据管理领域，构建了一套融合\textbf{向量语义检索}、\textbf{基于Embedding质心的个性化推荐}、\textbf{可选精排}以及\textbf{大语言模型学术问答}的全栈论文搜索与推荐系统。
+随着学术论文数量的爆炸式增长，研究者在海量文献中高效检索并发现有价值的论文成为一项重要需求。传统的关键词匹配搜索仅能捕获字面重合，无法理解查询的语义意图。本项目面向数据库与数据管理领域，构建了一套融合\textbf{向量语义检索}、\textbf{基于Embedding质心的个性化推荐}、\textbf{可选精排}、\textbf{PDF全文提取与分块Embedding}以及\textbf{基于RAG的大语言模型学术问答}的全栈论文搜索与推荐系统。
 
 \subsection{选题说明}
 
@@ -131,10 +132,11 @@
   & PyJWT          & 2.8.0   & JWT认证 \\
   & Passlib+bcrypt & —       & 密码哈希 \\
 \midrule
-\multirow{3}{*}{算法层}
+\multirow{4}{*}{算法层}
   & FastAPI        & 0.114.0 & 独立微服务 \\
   & ChromaDB       & —       & 向量数据库 \\
   & NumPy          & —       & 数值计算 \\
+  & PyMuPDF (fitz) & 1.27    & PDF全文提取 \\
 \midrule
 \multirow{2}{*}{存储}
   & MySQL 8.0+     & —       & 关系型数据库 \\
@@ -223,7 +225,14 @@
 
 \item \textbf{推荐流程}：用户浏览论文时前端调用\api{/click}接口记录点击 $\to$ 请求推荐时业务层获取用户最近50条点击 $\to$ 算法层从ChromaDB获取已点击论文的Embedding $\to$ 计算质心向量 $\to$ ChromaDB近邻搜索 $\to$ 过滤已读 $\to$ 返回Top-K推荐。
 
-\item \textbf{对话流程}：前端发送多轮对话 $\to$ 业务层注入用户最近5篇已读论文作为系统提示词 $\to$ 转发至算法层 $\to$ 调用DashScope Qwen兼容接口 $\to$ SSE流式返回 $\to$ 前端实时渲染Markdown。
+\item \textbf{对话流程（三种模式）}：
+  \begin{itemize}
+  \item \textbf{论文问答模式}：论文详情页提问 $\to$ 业务层调用算法层\api{/search-chunks}按\code{paper\_id}检索该论文全文分块 $\to$ 注入论文元信息与全文片段 $\to$ LLM基于全文内容回答。
+  \item \textbf{RAG全库模式}：AI对话页提问 $\to$ 业务层调用\api{/search-chunks}全库检索最相关分块 $\to$ 按论文聚合并注入上下文 $\to$ LLM回答并附带参考论文列表 $\to$ 前端显示可点击的引用标签。
+  \item \textbf{纯对话模式}：注入用户最近5篇已读论文摘要 $\to$ 转发至算法层 $\to$ SSE流式返回。
+  \end{itemize}
+
+\item \textbf{全文索引流程}：PDF全文经PyMuPDF提取 $\to$ 按约800词/块分块（100词重叠）$\to$ 批量调用算法层\api{/index-chunks} $\to$ Embedding后存入ChromaDB \code{paper\_chunks} collection。
 \end{enumerate}
 
 \textbf{降级机制}：当算法层不可用时，搜索自动降级为MySQL \code{LIKE}模糊匹配，保障系统基本可用性。
@@ -457,7 +466,11 @@
 \midrule
 \multicolumn{4}{l}{\textit{AI对话}} \\
 \code{/chat}                 & POST & 是 & 非流式LLM对话 \\
-\code{/chat/stream}          & POST & 是 & 流式SSE多轮对话 \\
+\code{/chat/stream}          & POST & 是 & 流式SSE对话（论文问答/RAG/纯对话）\\
+\midrule
+\multicolumn{4}{l}{\textit{PDF管理}} \\
+\code{/papers/\{id\}/pdf}       & GET  & 是 & 下载论文PDF \\
+\code{/papers/\{id\}/upload-pdf}& POST & 是 & 上传PDF（管理员）\\
 \bottomrule
 \end{tabular}
 \end{table}
@@ -483,9 +496,15 @@
 \item 算法层返回推荐结果后，业务层从MySQL补全元数据返回前端。
 \end{enumerate}
 
-\subsubsection{对话上下文注入}
+\subsubsection{对话上下文注入与RAG}
 
-\api{POST /chat/stream}接口在转发对话时，自动从\code{user\_clicks}中获取用户最近5篇已读论文的标题和摘要，拼接到系统提示词中，使LLM能根据用户阅读兴趣提供个性化回答。
+\api{POST /chat/stream}接口支持三种模式，由请求参数\code{paper\_id}和\code{use\_rag}控制：
+
+\begin{enumerate}
+\item \textbf{论文问答模式}（\code{paper\_id}有值）：调用算法层\api{/search-chunks}检索该论文全文分块（Top-5），将论文元信息与全文片段注入系统提示词，LLM基于论文实际内容回答。
+\item \textbf{RAG全库模式}（\code{use\_rag=true}，默认）：以用户最后一条消息为查询，调用\api{/search-chunks}检索全库最相关的8个分块，按\code{paper\_id}聚合后注入上下文，同时构建引用列表。SSE流结束后发送\code{references}事件，前端显示可点击的参考论文标签。
+\item \textbf{纯对话模式}（\code{use\_rag=false}）：保留原有逻辑，仅注入用户最近5篇已读论文摘要。
+\end{enumerate}
 
 
 % ════════════════════════════════════════════════════
@@ -549,9 +568,56 @@ Embedding采用批量请求（每批最多10条），通过DashScope OpenAI兼�
 \item \textbf{Qwen3-Rerank}（\code{qwen}）：调用DashScope的\code{qwen3-rerank}模型，对查询和候选文档进行交叉编码精排，效果最优但延迟较高。
 \end{enumerate}
 
-\subsection{LLM学术问答}
+\subsection{PDF全文提取与分块Embedding}
 
-通过DashScope OpenAI兼容接口调用\code{qwen-flash}模型，支持流式和非流式两种模式。业务层在转发前注入包含用户近期阅读论文的系统提示词，使对话具有上下文感知能力。流式响应通过FastAPI \code{StreamingResponse}实现SSE推送。
+为使LLM能够基于论文全文内容回答问题，系统实现了PDF全文提取与分块Embedding管道：
+
+\subsubsection{全文提取}
+
+使用PyMuPDF（\code{fitz}）逐页提取PDF文本。对120篇论文PDF进行处理，共提取约2080个文本分块。
+
+\subsubsection{分块策略}
+
+采用滑动窗口分块：每块约800词，相邻块重叠100词，确保上下文连续性：
+
+\begin{equation}
+\text{chunks} = \{\text{words}[i:i+800] \mid i = 0, 700, 1400, \dots\}
+\end{equation}
+
+对超长文本（如含编码数据的PDF），在Embedding前截断至8000字符以满足API输入限制。
+
+\subsubsection{向量索引}
+
+分块文本通过\code{text-embedding-v4}生成1024维向量，存入ChromaDB的\code{paper\_chunks} collection，每个分块附带\code{paper\_id}和\code{chunk\_index}元数据，支持按论文ID过滤检索：
+
+\begin{lstlisting}[language=Python, caption=分块索引数据结构]
+collection.upsert(
+    ids=["paper_42_chunk_3"],
+    documents=["chunk text..."],
+    embeddings=[...],        # 1024-dim vector
+    metadatas=[{"paper_id": 42, "chunk_index": 3}],
+)
+\end{lstlisting}
+
+算法层提供两个新端点：
+\begin{itemize}
+\item \api{POST /index-chunks}：批量索引分块（提取脚本调用）
+\item \api{POST /search-chunks}：检索分块，支持\code{paper\_id}过滤（全库或单篇论文检索）
+\end{itemize}
+
+\subsection{LLM学术问答与RAG}
+
+通过DashScope OpenAI兼容接口调用\code{qwen-flash}模型，支持流式和非流式两种模式。
+
+\subsubsection{论文问答}
+
+在论文详情页，用户可直接提问。系统从该论文的全文分块中检索最相关的5个片段注入系统提示词，使LLM能基于论文实际全文内容（而非仅摘要）回答问题。
+
+\subsubsection{RAG全库检索增强生成}
+
+在AI对话页面，系统以用户问题为查询从全库2080个分块中检索Top-8最相关片段，按论文ID聚合后注入系统提示词，并生成引用列表。LLM回答后，前端显示参考论文标签，用户可点击跳转至对应论文详情页。
+
+流式响应通过FastAPI \code{StreamingResponse}实现SSE推送。
 
 
 % ════════════════════════════════════════════════════
@@ -573,9 +639,9 @@ Embedding采用批量请求（每批最多10条），通过DashScope OpenAI兼�
 登录      & \code{LoginForm.vue}     & 用户名密码登录，JWT持久化到localStorage \\
 注册      & \code{RegisterForm.vue}  & 新用户注册（用户名、邮箱、姓名）\\
 论文搜索  & \code{PaperSearch.vue}   & 语义搜索 + 搜索历史标签 + Rerank开关 + 分页 \\
-论文详情  & \code{PaperDetail.vue}   & 标题、作者、摘要、关键词、来源链接 \\
+论文详情  & \code{PaperDetail.vue}   & 标题、摘要、PDF阅读器、\textbf{AI论文问答} \\
 论文推荐  & \code{PaperRecommend.vue}& 基于浏览历史的个性化推荐列表 \\
-AI对话    & \code{Chat.vue}          & SSE流式Markdown渲染 + 多轮对话 \\
+AI对话    & \code{Chat.vue}          & SSE流式渲染 + \textbf{RAG检索增强} + 参考论文 \\
 用户管理  & \code{Profile.vue}等     & 个人信息、用户列表、添加用户 \\
 \bottomrule
 \end{tabular}
@@ -587,6 +653,8 @@ AI对话    & \code{Chat.vue}          & SSE流式Markdown渲染 + 多轮对话 
 \item \textbf{路由守卫}：通过\code{vue-router}的\code{beforeEach}钩子，未登录用户自动重定向至登录页。
 \item \textbf{Token持久化}：JWT存储在\code{localStorage}，Axios拦截器自动注入\code{Authorization}头。
 \item \textbf{流式渲染}：AI对话使用\code{fetch} + \code{ReadableStream}接收SSE，通过\code{marked}库实时渲染Markdown。
+\item \textbf{论文问答}：论文详情页内嵌AI问答框，提供快捷提问（"核心方法"、"主要贡献"等），基于论文全文分块回答。
+\item \textbf{RAG参考引用}：AI对话页自动检索全库论文分块，回答后显示参考论文标签，点击可跳转至对应详情页。
 \item \textbf{搜索历史}：去重后以Element Plus Tag组件展示，点击标签可快速复搜。
 \item \textbf{Rerank开关}：搜索页面提供精排开关，设置持久化到\code{localStorage}。
 \item \textbf{状态管理}：使用Pinia管理用户状态，支持Token自动恢复。
@@ -664,16 +732,23 @@ Novelty  & 推荐物品的平均自信息量 \\
 \toprule
 \textbf{编号} & \textbf{配置} & \textbf{P@5} & \textbf{P@10} & \textbf{P@20} & \textbf{NDCG@5} & \textbf{MRR} & \textbf{延迟(ms)} \\
 \midrule
-A1 & 完整系统（向量+Rerank）& 0.900 & 0.858 & 0.696 & 0.919 & 0.979 & 411.4 \\
-A2 & SQL LIKE关键词搜索     & 0.600 & 0.563 & 0.444 & 0.621 & 0.805 & 7.9 \\
-A3 & TF-IDF余弦相似度       & 0.883 & 0.758 & 0.606 & 0.908 & 1.000 & 0.5 \\
-A4 & 向量检索（无Rerank）    & 0.900 & 0.858 & 0.696 & 0.919 & 0.979 & 213.9 \\
-A5 & 向量检索（余弦距离）    & 0.900 & 0.858 & 0.696 & 0.919 & 0.979 & 198.3 \\
+A1 & 完整系统（向量+Rerank）& 0.825 & 0.713 & 0.513 & 0.847 & 0.958 & 467.7 \\
+A2 & SQL LIKE关键词搜索     & 0.542 & 0.508 & 0.396 & 0.546 & 0.690 & 7.3 \\
+A3 & TF-IDF余弦相似度       & 0.725 & 0.646 & 0.513 & 0.753 & 0.872 & 0.5 \\
+A4 & 向量检索（无Rerank）    & 0.825 & 0.713 & 0.513 & 0.847 & 0.958 & 186.1 \\
+A5 & 向量检索（余弦距离）    & 0.825 & 0.713 & 0.513 & 0.847 & 0.958 & 250.1 \\
 \bottomrule
 \end{tabular}
 \end{table}
 
-\textbf{分析}：向量语义检索（A1/A4/A5）在P@K和NDCG@K上显著优于SQL LIKE（A2），提升幅度约30\%--50\%。TF-IDF（A3）效果接近但在P@10上弱于向量检索（0.758 vs 0.858），说明预训练Embedding在语义理解上有明显优势。
+\textbf{分析}：向量语义检索（A1/A4/A5）在P@K和NDCG@K上显著优于SQL LIKE（A2），P@5提升52.2\%（0.542$\to$0.825）。TF-IDF（A3）效果居中但在P@10上弱于向量检索（0.646 vs 0.713），说明预训练Embedding在语义理解上有明显优势。Rerank对Top-K指标无额外贡献（A1与A4一致），但引入约280ms额外延迟。
+
+\begin{figure}[H]
+\centering
+\includegraphics[width=0.85\textwidth]{search_ablation.pdf}
+\caption{搜索系统消融实验：各配置在P@5、P@10、NDCG@5上的对比}
+\label{fig:search_ablation}
+\end{figure}
 
 \subsection{实验二：推荐系统消融实验}
 
@@ -685,16 +760,23 @@ A5 & 向量检索（余弦距离）    & 0.900 & 0.858 & 0.696 & 0.919 & 0.979 &
 \toprule
 \textbf{编号} & \textbf{配置} & \textbf{Hit Rate@10} & \textbf{Coverage} & \textbf{Diversity} & \textbf{延迟(ms)} \\
 \midrule
-B1 & 完整质心推荐       & 0.750 & 0.608 & 0.489 & 12.4 \\
-B2 & 仅最后一次点击推荐 & 0.708 & 0.742 & 0.513 & 13.4 \\
-B3 & 缩短窗口（5篇）    & 0.750 & 0.608 & 0.489 & 10.3 \\
-B4 & 不过滤已读         & 0.583 & 0.683 & 0.482 & 10.7 \\
-B5 & 质心加随机扰动     & 0.833 & 0.742 & 0.534 & 11.5 \\
+B1 & 完整质心推荐       & 0.727 & 0.542 & 0.494 & 4.9 \\
+B2 & 仅最后一次点击推荐 & 0.682 & 0.658 & 0.508 & 4.8 \\
+B3 & 缩短窗口（5篇）    & 0.727 & 0.542 & 0.494 & 4.8 \\
+B4 & 不过滤已读         & 0.682 & 0.625 & 0.490 & 4.8 \\
+B5 & 质心加随机扰动     & 0.591 & 0.742 & 0.533 & 4.9 \\
 \bottomrule
 \end{tabular}
 \end{table}
 
-\textbf{分析}：过滤已读论文（B1 vs B4）对Hit Rate贡献显著（+16.7\%）。随机扰动（B5）意外提升了命中率和多样性，说明在小数据集上适度随机有利于探索。
+\textbf{分析}：多篇点击的质心推荐（B1）优于仅用最后一篇（B2），Hit Rate提升6.6\%（0.682$\to$0.727）。随机扰动（B5）牺牲了命中率但显著提高了Coverage和Diversity，体现了精准与探索的经典权衡。
+
+\begin{figure}[H]
+\centering
+\includegraphics[width=0.85\textwidth]{recommend_ablation.pdf}
+\caption{推荐系统消融实验：各配置在Hit Rate@10、Coverage、Diversity上的对比}
+\label{fig:recommend_ablation}
+\end{figure}
 
 \subsection{实验三：搜索系统性能评估}
 
@@ -705,7 +787,7 @@ B5 & 质心加随机扰动     & 0.833 & 0.742 & 0.534 & 11.5 \\
 \toprule
 \textbf{指标} & \textbf{P@5} & \textbf{P@10} & \textbf{P@20} & \textbf{MRR} & \textbf{MAP} \\
 \midrule
-均值 & 0.900 & 0.858 & 0.696 & 0.979 & 0.482 \\
+均值 & 0.825 & 0.713 & 0.513 & 0.958 & 0.447 \\
 \bottomrule
 \end{tabular}
 
@@ -716,15 +798,22 @@ B5 & 质心加随机扰动     & 0.833 & 0.742 & 0.534 & 11.5 \\
 \toprule
 \textbf{阶段} & \textbf{均值} & \textbf{标准差} \\
 \midrule
-Embedding编码     & 199.6 & 34.1 \\
-ChromaDB检索      & 7.3   & 2.5 \\
-Reranker精排      & 8.6   & 0.4 \\
-\textbf{端到端总计} & \textbf{215.5} & \textbf{37.0} \\
+Embedding编码     & 202.2 & 19.5 \\
+ChromaDB检索      & 6.1   & 0.6 \\
+Reranker精排      & 8.6   & 0.6 \\
+\textbf{端到端总计} & \textbf{217.0} & \textbf{19.0} \\
 \bottomrule
 \end{tabular}
 \end{table}
 
-\textbf{分析}：延迟瓶颈主要在Embedding编码（占92.6\%），ChromaDB向量检索本身仅需约7ms。
+\textbf{分析}：延迟瓶颈主要在Embedding编码（占93.2\%），ChromaDB向量检索本身仅需约6ms。标准差较小（19.0ms），说明系统延迟稳定。
+
+\begin{figure}[H]
+\centering
+\includegraphics[width=0.55\textwidth]{latency_breakdown.pdf}
+\caption{搜索延迟分解：Embedding编码占端到端延迟的93.2\%}
+\label{fig:latency_breakdown}
+\end{figure}
 
 \subsection{实验四：推荐系统性能评估}
 
@@ -735,7 +824,7 @@ Reranker精排      & 8.6   & 0.4 \\
 \toprule
 \textbf{指标} & \textbf{Hit Rate@10} & \textbf{Coverage} & \textbf{Diversity} & \textbf{Novelty} & \textbf{延迟(ms)} \\
 \midrule
-均值 & 0.604 & 0.608 & 0.489 & 6.644 & 11.4 \\
+均值 & 0.591 & 0.542 & 0.494 & 6.644 & 4.9 \\
 \bottomrule
 \end{tabular}
 \end{table}
@@ -749,9 +838,9 @@ Reranker精排      & 8.6   & 0.4 \\
 \toprule
 \textbf{距离度量} & \textbf{P@5} & \textbf{P@10} & \textbf{NDCG@5} & \textbf{NDCG@10} & \textbf{MRR} & \textbf{延迟(ms)} \\
 \midrule
-L2 欧氏距离    & 0.900 & 0.858 & 0.919 & 0.884 & 0.979 & 6.28 \\
-Cosine 余弦    & 0.900 & 0.858 & 0.919 & 0.884 & 0.979 & 5.79 \\
-Inner Product  & 0.900 & 0.858 & 0.919 & 0.884 & 0.979 & 6.00 \\
+L2 欧氏距离    & 0.825 & 0.713 & 0.847 & 0.760 & 0.958 & 3.64 \\
+Cosine 余弦    & 0.825 & 0.713 & 0.847 & 0.760 & 0.958 & 3.75 \\
+Inner Product  & 0.825 & 0.713 & 0.847 & 0.760 & 0.958 & 4.89 \\
 \bottomrule
 \end{tabular}
 \end{table}
@@ -768,16 +857,23 @@ Inner Product  & 0.900 & 0.858 & 0.919 & 0.884 & 0.979 & 6.00 \\
 \toprule
 \textbf{编号} & \textbf{文档表示} & \textbf{P@5} & \textbf{P@10} & \textbf{NDCG@5} & \textbf{MRR} & \textbf{MAP} \\
 \midrule
-C1 & 仅Title                    & 0.842 & 0.796 & 0.868 & 0.979 & 0.442 \\
-C2 & 仅Abstract                 & 0.892 & 0.846 & 0.896 & 0.958 & 0.448 \\
-C3 & 仅Keywords                 & \textbf{0.925} & \textbf{0.867} & \textbf{0.928} & 0.958 & 0.466 \\
-C4 & Title + Abstract           & 0.892 & 0.846 & 0.904 & 0.958 & 0.461 \\
-C5 & Title + Abstract + Keywords& 0.900 & 0.858 & 0.919 & \textbf{0.979} & \textbf{0.482} \\
+C1 & 仅Title                    & 0.692 & 0.600 & 0.732 & 0.931 & 0.371 \\
+C2 & 仅Abstract                 & \textbf{0.850} & 0.683 & \textbf{0.863} & 0.938 & 0.420 \\
+C3 & 仅Keywords                 & 0.767 & 0.629 & 0.807 & 0.958 & 0.381 \\
+C4 & Title + Abstract           & 0.833 & 0.696 & 0.854 & 0.958 & 0.432 \\
+C5 & Title + Abstract + Keywords& 0.825 & \textbf{0.713} & 0.847 & \textbf{0.958} & \textbf{0.447} \\
 \bottomrule
 \end{tabular}
 \end{table}
 
-\textbf{分析}：完整拼接（C5）在MRR和MAP上最优，综合表现最均衡，故作为系统默认配置。
+\textbf{分析}：仅Abstract（C2）在P@5和NDCG@5上最高（0.850、0.863），但完整拼接（C5）在P@10和MAP上最优（0.713、0.447），综合表现最均衡，故作为系统默认配置。仅Title（C1）效果最差，说明标题信息量有限。
+
+\begin{figure}[H]
+\centering
+\includegraphics[width=0.85\textwidth]{doc_representation.pdf}
+\caption{文档表示方式对比：不同字段组合在P@5、NDCG@5、MAP上的表现}
+\label{fig:doc_repr}
+\end{figure}
 
 \subsection{实验七：Reranker对比}
 
@@ -788,14 +884,21 @@ C5 & Title + Abstract + Keywords& 0.900 & 0.858 & 0.919 & \textbf{0.979} & \text
 \toprule
 \textbf{编号} & \textbf{Pipeline} & \textbf{P@5} & \textbf{P@10} & \textbf{NDCG@5} & \textbf{MAP} & \textbf{延迟(ms)} \\
 \midrule
-R1 & Base Vector（无精排）      & 0.900 & 0.858 & 0.919 & 0.482 & 244.6 \\
-R2 & Qwen3-Rerank（召回60）     & \textbf{0.925} & 0.854 & \textbf{0.939} & 0.471 & 569.0 \\
-R3 & Qwen3-Rerank（召回100）    & \textbf{0.925} & 0.854 & \textbf{0.939} & 0.473 & 615.4 \\
+R1 & Base Vector（无精排）      & 0.825 & \textbf{0.713} & 0.847 & 0.447 & 259.7 \\
+R2 & Qwen3-Rerank（召回60）     & \textbf{0.833} & 0.663 & 0.846 & 0.447 & 602.7 \\
+R3 & Qwen3-Rerank（召回100）    & 0.825 & 0.679 & 0.841 & \textbf{0.451} & 678.5 \\
 \bottomrule
 \end{tabular}
 \end{table}
 
-\textbf{分析}：Qwen3-Rerank在P@5上提升2.5\%，但延迟翻倍（\textasciitilde 570ms vs 245ms）。扩大召回窗口（R3 vs R2）效果几乎无差异，说明60的召回量已足够。
+\textbf{分析}：Qwen3-Rerank在P@5上微幅提升（R2=0.833 vs R1=0.825），但P@10反而下降（0.663 vs 0.713），且延迟翻倍（\textasciitilde 603ms vs 260ms）。扩大召回窗口（R3 vs R2）效果无明显差异，说明60的召回量已足够。在当前数据集上，Rerank的精度增益有限，但延迟代价显著。
+
+\begin{figure}[H]
+\centering
+\includegraphics[width=0.9\textwidth]{reranker_tradeoff.pdf}
+\caption{Reranker精度–延迟权衡：精排提升P@5约2.5\%，但延迟增加约一倍}
+\label{fig:reranker_tradeoff}
+\end{figure}
 
 \subsection{实验八：数据规模扩展测试}
 
@@ -806,27 +909,34 @@ R3 & Qwen3-Rerank（召回100）    & \textbf{0.925} & 0.854 & \textbf{0.939} & 
 \toprule
 \textbf{论文数} & \textbf{索引构建(ms)} & \textbf{Embedding(ms)} & \textbf{平均查询(ms)} & \textbf{P95(ms)} & \textbf{Max(ms)} \\
 \midrule
-20  & 1,405  & 1,271  & 4.56 & 6.30 & 7.49 \\
-40  & 3,049  & 2,867  & 4.36 & 6.04 & 7.63 \\
-60  & 3,865  & 3,672  & 4.37 & 6.41 & 7.85 \\
-80  & 5,444  & 5,168  & 3.78 & 7.55 & 10.69 \\
-100 & 6,454  & 6,215  & 3.15 & 4.99 & 6.47 \\
-120 & 7,802  & 7,576  & 3.18 & 4.67 & 5.85 \\
+20  & 1,287  & 1,176  & 2.60 & 3.56 & 4.42 \\
+40  & 2,818  & 2,682  & 2.76 & 4.03 & 5.24 \\
+60  & 4,037  & 3,876  & 3.66 & 8.62 & 11.41 \\
+80  & 5,212  & 4,960  & 2.80 & 4.18 & 5.48 \\
+100 & 6,376  & 6,179  & 2.89 & 4.44 & 5.89 \\
+120 & 8,228  & 7,994  & 2.84 & 4.58 & 6.27 \\
 \bottomrule
 \end{tabular}
 \end{table}
 
-\textbf{分析}：索引构建时间与论文数量呈线性关系，瓶颈在Embedding编码（API调用），ChromaDB upsert仅占约3\%。查询延迟在120篇规模下稳定在3--6ms，表明系统具有良好的可扩展性。
+\textbf{分析}：索引构建时间与论文数量呈线性关系，瓶颈在Embedding编码（API调用），ChromaDB upsert仅占约3\%。查询延迟在120篇规模下稳定在2.6--3.7ms（均值），表明系统具有良好的可扩展性。
+
+\begin{figure}[H]
+\centering
+\includegraphics[width=0.9\textwidth]{scalability.pdf}
+\caption{数据规模扩展性测试：索引构建时间线性增长，查询延迟稳定在2.6--3.7ms}
+\label{fig:scalability}
+\end{figure}
 
 \subsection{实验小结}
 
 \begin{enumerate}
-\item 向量语义检索相比SQL LIKE，P@5提升50\%（0.60 $\to$ 0.90），语义理解能力显著。
-\item 推荐系统的已读过滤机制对Hit Rate贡献16.7\%，是推荐效果的关键组件。
-\item 系统端到端搜索延迟约215ms，瓶颈在Embedding编码（92.6\%），ChromaDB检索本身仅约7ms。
-\item Qwen3-Rerank可提升Top-5精度2.5\%，但延迟增加约一倍，适合对精度要求高的场景。
+\item 向量语义检索相比SQL LIKE，P@5提升52.2\%（0.542 $\to$ 0.825），语义理解能力显著。
+\item 质心推荐比仅用最后一篇点击Hit Rate提升6.6\%（0.682$\to$0.727），多篇历史有助于捕捉综合兴趣。
+\item 系统端到端搜索延迟约217ms，瓶颈在Embedding编码（93.2\%），ChromaDB检索本身仅约6ms。
+\item Qwen3-Rerank在当前数据集上精度增益有限（P@5+0.8\%），但延迟增加约一倍，适合对精度要求极高的场景。
 \item 归一化向量下L2/Cosine/IP三种度量效果完全等价。
-\item 完整的Title+Abstract+Keywords拼接是最均衡的文档表示方式。
+\item 完整的Title+Abstract+Keywords拼接在P@10和MAP上最优，是最均衡的文档表示方式。
 \end{enumerate}
 
 
@@ -850,7 +960,7 @@ R3 & Qwen3-Rerank（召回100）    & \textbf{0.925} & 0.854 & \textbf{0.939} & 
 \item 信息检索与索引（Retrieval \& Indexing）
 \end{itemize}
 
-每篇论文包含标题、完整摘要、作者列表、发表会议/期刊、年份、关键词和来源链接，数据来源为OpenAlex学术API。
+每篇论文包含标题、完整摘要、作者列表、发表会议/期刊、年份、关键词和来源链接，数据来源为OpenAlex学术API。此外，系统本地存储了120篇论文的PDF全文（约187MB），通过PyMuPDF提取文本后分块Embedding，共生成约2080个全文分块向量，用于论文问答和RAG检索增强。
 
 \subsection{Ground Truth构建}
 
@@ -940,19 +1050,21 @@ cd frontend && npm run dev -- --host 0.0.0.0
 \subsection{导入种子数据}
 
 \begin{lstlisting}[language=bash]
-cd backend && python seed_papers.py
+cd backend && python seed_papers.py       # 导入论文元数据+摘要索引
+cd backend && python extract_chunks.py    # PDF全文提取+分块索引
 \end{lstlisting}
 
-该脚本会将120篇论文写入MySQL并在ChromaDB中建立向量索引。
+\code{seed\_papers.py}将120篇论文写入MySQL并在ChromaDB中建立摘要级向量索引。\code{extract\_chunks.py}使用PyMuPDF提取PDF全文，按800词/块分块后通过算法层\api{/index-chunks}建立全文分块索引（约2080个chunks），支持后续的论文问答和RAG检索。
 
 \subsection{功能使用}
 
 \begin{enumerate}
 \item \textbf{注册与登录}：打开\code{http://localhost:5173}，点击注册创建账户，然后登录。
 \item \textbf{论文搜索}：在侧边栏点击"论文搜索"，输入自然语言查询（如"query optimization in distributed databases"），点击搜索。支持切换是否启用Rerank精排。
-\item \textbf{查看论文}：点击搜索结果中的论文标题，查看论文详情（标题、作者、摘要、关键词）。
+\item \textbf{查看论文}：点击搜索结果中的论文标题，查看论文详情（标题、作者、摘要、PDF全文）。
+\item \textbf{论文问答}：在论文详情页底部的"AI论文问答"区域，可以直接就该论文提问（如"核心方法"、"主要贡献"），AI基于论文全文分块回答。
 \item \textbf{论文推荐}：浏览若干论文后，点击侧边栏"论文推荐"，系统将根据浏览历史推荐相关论文。
-\item \textbf{AI对话}：点击侧边栏"AI对话"，与LLM进行多轮学术问答。系统会自动注入近期阅读的论文上下文。
+\item \textbf{AI对话}：点击侧边栏"AI对话"，与LLM进行多轮学术问答。系统自动检索全库论文全文分块（RAG），回答后显示参考论文标签，点击标签可跳转至对应论文详情。
 \item \textbf{搜索历史}：搜索页面上方显示去重后的搜索历史标签，点击可快速复搜。
 \end{enumerate}
 
@@ -1000,17 +1112,19 @@ mysql_fastapi_vue_project/
 |   `-- vite.config.ts            # 构建配置 + 代理
 |
 |-- backend/                      # 业务层 (FastAPI + MySQL)
-|   |-- main.py                   # 路由 + JWT认证
+|   |-- main.py                   # 路由 + JWT认证 + RAG对话
 |   |-- models.py                 # ORM 模型 (4张表)
 |   |-- schemas.py                # Pydantic 校验
 |   |-- crud.py                   # CRUD 操作
 |   |-- security.py               # 密码哈希
 |   |-- seed_papers.py            # 种子数据导入
+|   |-- extract_chunks.py         # PDF全文提取+分块索引
+|   |-- pdf_store/                # 120篇论文PDF文件
 |   `-- seed_data/papers.json     # 120篇论文数据
 |
 |-- backend_algo/                 # 算法层 (FastAPI + ChromaDB)
-|   |-- main.py                   # 搜索/推荐/对话路由
-|   |-- vector_store.py           # ChromaDB 交互
+|   |-- main.py                   # 搜索/推荐/对话/分块检索路由
+|   |-- vector_store.py           # ChromaDB 交互 (papers+chunks)
 |   |-- reranker.py               # Reranker 实现
 |   `-- config.py                 # 配置加载
 |
@@ -1040,13 +1154,13 @@ mysql_fastapi_vue_project/
 \begin{enumerate}
 \item \textbf{数据库设计}：设计了包含\code{users}、\code{papers}、\code{user\_clicks}、\code{search\_history}四张表的关系数据库，支持用户管理、论文存储和行为追踪。
 
-\item \textbf{业务层实现}：基于FastAPI实现了完整的RESTful API，包括JWT认证、论文CRUD、搜索/推荐代理和LLM对话转发，并实现了算法层不可用时的SQL降级机制。
+\item \textbf{业务层实现}：基于FastAPI实现了完整的RESTful API，包括JWT认证、论文CRUD、搜索/推荐代理、PDF管理以及三模式LLM对话（论文问答/RAG/纯对话），并实现了算法层不可用时的SQL降级机制。
 
-\item \textbf{算法层实现}：实现了基于ChromaDB的向量语义检索、Embedding质心推荐和多种Reranker精排策略，支持DashScope Qwen兼容接口的流式LLM对话。
+\item \textbf{算法层实现}：实现了基于ChromaDB的向量语义检索、Embedding质心推荐、多种Reranker精排策略、PDF全文提取与分块Embedding（约2080个chunks），以及基于全文分块的RAG检索增强生成。
 
-\item \textbf{前端界面}：基于Vue~3 + Element Plus构建了包含搜索、推荐、详情、对话等7个页面的完整前端，支持流式Markdown渲染、搜索历史、路由守卫等特性。
+\item \textbf{前端界面}：基于Vue~3 + Element Plus构建了包含搜索、推荐、详情、对话等7个页面的完整前端，支持流式Markdown渲染、论文详情页内嵌AI问答、RAG对话参考论文引用标签、搜索历史等特性。
 
-\item \textbf{算法实验}：设计并执行了8组完整实验，涵盖消融分析、性能评估、查询优化和可扩展性测试，验证了向量检索相比关键词搜索P@5提升50\%、推荐系统Hit Rate达0.60、端到端延迟约215ms等核心指标。
+\item \textbf{算法实验}：设计并执行了8组完整实验，涵盖消融分析、性能评估、查询优化和可扩展性测试，验证了向量检索相比关键词搜索P@5提升52.2\%（0.542$\to$0.825）、推荐系统Hit Rate达0.727、端到端搜索延迟约217ms等核心指标。
 \end{enumerate}
 
 \end{document}

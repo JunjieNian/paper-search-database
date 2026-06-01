@@ -1,35 +1,35 @@
 {
   "1. 搜索系统消融实验": {
     "status": "success",
-    "elapsed_s": 33.279560641152784
+    "elapsed_s": 25.18320010486059
   },
   "2. 推荐系统消融实验": {
     "status": "success",
-    "elapsed_s": 1.5234267881605774
+    "elapsed_s": 0.5871592520270497
   },
   "3. 搜索系统性能评估": {
     "status": "success",
-    "elapsed_s": 15.694013683823869
+    "elapsed_s": 15.910357082029805
   },
   "4. 推荐系统性能评估": {
     "status": "success",
-    "elapsed_s": 1.7480788440443575
+    "elapsed_s": 0.6939298398792744
   },
   "5. 距离度量对比": {
     "status": "success",
-    "elapsed_s": 15.006851373007521
+    "elapsed_s": 22.57570271100849
   },
   "6. 文档表示对比": {
     "status": "success",
-    "elapsed_s": 56.57835585298017
+    "elapsed_s": 57.54018310899846
   },
   "7. Reranker 对比": {
     "status": "success",
-    "elapsed_s": 25.912744662025943
+    "elapsed_s": 37.360298743937165
   },
   "8. 数据规模测试": {
     "status": "success",
-    "elapsed_s": 41.68331360211596
+    "elapsed_s": 40.05184908001684
   },
   "__meta__": {
     "embedding_model": "text-embedding-v4",
@@ -37,6 +37,6 @@
     "chroma_client_mode": "persistent",
     "mysql_database": "paper_search",
     "num_runs": 3,
-    "total_elapsed_s": 191.4267155190464
+    "total_elapsed_s": 199.90282696811482
   }
 }

@@ -79,3 +79,31 @@ class IndexRequest(BaseModel):
 
 class IndexResponse(BaseModel):
     indexed_count: int
+
+
+class ChunkIndex(BaseModel):
+    chunk_id: str        # "paper_42_chunk_3"
+    paper_id: int
+    chunk_index: int
+    text: str
+
+
+class ChunkIndexRequest(BaseModel):
+    chunks: List[ChunkIndex]
+
+
+class ChunkSearchRequest(BaseModel):
+    query: str
+    top_k: int = 5
+    paper_id: Optional[int] = None  # None = search all
+
+
+class ChunkSearchResult(BaseModel):
+    chunk_id: str
+    paper_id: int
+    text: str
+    score: float
+
+
+class ChunkSearchResponse(BaseModel):
+    results: List[ChunkSearchResult]

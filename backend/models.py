@@ -29,6 +29,7 @@ class Paper(Base):
     year = Column(Integer)
     keywords = Column(String(512))
     url = Column(String(512))
+    has_pdf = Column(Boolean, default=False)
     created_at = Column(DateTime, default=datetime.utcnow)
 
 

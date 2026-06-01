@@ -1,9 +1,10 @@
 <script setup lang="ts">
 import {computed, nextTick, onMounted, ref, watch} from 'vue'
 import {ElMessage} from 'element-plus'
-import {Delete, Plus} from '@element-plus/icons-vue'
+import {ArrowLeftBold, ArrowRightBold, Delete, Plus} from '@element-plus/icons-vue'
 import {marked} from 'marked'
-import {ChatStream} from '@/request/api'
+import {ChatStream, type ChatReference} from '@/request/api'
+import {useRouter} from 'vue-router'
 
 marked.setOptions({
   breaks: true,
@@ -17,6 +18,7 @@ function renderMarkdown(text: string): string {
 interface Message {
   role: 'user' | 'assistant'
   content: string
+  references?: ChatReference[]
 }
 
 interface Conversation {
@@ -27,6 +29,7 @@ interface Conversation {
 }
 
 const STORAGE_KEY = 'paper_search_chat_conversations'
+const LIST_COLLAPSED_STORAGE_KEY = 'paper_search_chat_list_collapsed'
 const WELCOME_MESSAGE = '你好！我是学术论文助手，可以帮你解释论文、总结方向、扩展检索关键词，或者回答本系统的使用问题。'
 const starterPrompts = [
   '帮我解释一下 query optimization 的核心目标',
@@ -66,6 +69,7 @@ function loadConversations(): Conversation[] {
           .map((msg: any) => ({
             role: msg.role,
             content: msg.content,
+            ...(Array.isArray(msg.references) && msg.references.length ? {references: msg.references} : {}),
           })),
       }))
       .filter(item => item.messages.length > 0)
@@ -74,11 +78,18 @@ function loadConversations(): Conversation[] {
   }
 }
 
+const chatRouter = useRouter()
+
 const conversations = ref<Conversation[]>([])
 const activeConversationId = ref('')
 const inputText = ref('')
 const loading = ref(false)
 const chatContainer = ref<HTMLElement | null>(null)
+const isConversationListCollapsed = ref(localStorage.getItem(LIST_COLLAPSED_STORAGE_KEY) === 'true')
+
+function navigateToPaper(paperId: number) {
+  chatRouter.push(`/index/paperDetail/${paperId}`)
+}
 
 const activeConversation = computed(() =>
   conversations.value.find(item => item.id === activeConversationId.value) || null,
@@ -174,6 +185,10 @@ function deleteConversation(id: string) {
   }
 }
 
+function toggleConversationList() {
+  isConversationListCollapsed.value = !isConversationListCollapsed.value
+}
+
 function fillPrompt(prompt: string) {
   inputText.value = prompt
 }
@@ -225,13 +240,17 @@ async function sendMessage() {
           scrollToBottom()
         }
       },
-      () => {
+      (refs?: ChatReference[]) => {
+        if (refs && refs.length > 0) {
+          conversation.messages[conversation.messages.length - 1].references = refs
+        }
         touchConversation(conversation)
         loading.value = false
         if (conversation.id === activeConversationId.value) {
           scrollToBottom()
         }
       },
+      {useRag: true},
     )
   } catch (_error) {
     conversation.messages[conversation.messages.length - 1].content = '抱歉，请求出错，请稍后重试。'
@@ -247,6 +266,10 @@ watch(conversations, () => {
 
 watch(activeConversationId, () => {
   scrollToBottom()
+})
+
+watch(isConversationListCollapsed, (value) => {
+  localStorage.setItem(LIST_COLLAPSED_STORAGE_KEY, String(value))
 })
 
 onMounted(() => {
@@ -265,13 +288,10 @@ onMounted(() => {
 </script>
 
 <template>
-  <div class="page-shell">
+  <div class="page-shell chat-page">
     <section class="page-hero">
       <p class="page-eyebrow">AI Assistant</p>
-      <h1 class="hero-title">保存会话的学术聊天助手</h1>
-      <p class="hero-description">
-        现在会按“经典聊天记录”形式在左侧保存会话列表，刷新页面或切换页面后仍能继续之前的对话。
-      </p>
+      <h1 class="hero-title">学术聊天助手</h1>
       <div class="prompt-tags">
         <el-tag
           v-for="prompt in starterPrompts"
@@ -285,19 +305,28 @@ onMounted(() => {
       </div>
     </section>
 
-    <section class="chat-layout">
-      <aside class="page-card conversation-panel">
+    <section class="chat-layout" :class="{ 'chat-layout--collapsed': isConversationListCollapsed }">
+      <aside class="page-card conversation-panel" :class="{ 'conversation-panel--collapsed': isConversationListCollapsed }">
         <div class="conversation-header">
-          <div>
-            <h2 class="card-heading">聊天记录</h2>
-            <p class="muted-text">当前浏览器会自动保存全部会话。</p>
+          <h2 v-if="!isConversationListCollapsed" class="card-heading">对话列表</h2>
+          <div class="conversation-actions">
+            <el-button
+              type="primary"
+              :icon="Plus"
+              :disabled="loading"
+              circle
+              @click="startNewConversation"
+            />
+            <el-button
+              plain
+              circle
+              :icon="isConversationListCollapsed ? ArrowRightBold : ArrowLeftBold"
+              @click="toggleConversationList"
+            />
           </div>
-          <el-button type="primary" :icon="Plus" :disabled="loading" @click="startNewConversation">
-            新建对话
-          </el-button>
         </div>
 
-        <div class="conversation-list">
+        <div v-show="!isConversationListCollapsed" class="conversation-list">
           <div
             v-for="conversation in conversations"
             :key="conversation.id"
@@ -327,7 +356,7 @@ onMounted(() => {
         <div class="chat-toolbar">
           <div>
             <h2 class="card-heading">{{ activeConversation?.title || '新对话' }}</h2>
-            <p class="muted-text">切换页面后返回，聊天内容仍会保留。</p>
+            <p class="muted-text">围绕当前主题继续提问，或随时重新开始。</p>
           </div>
           <el-button plain :disabled="loading" @click="resetCurrentConversation">
             清空当前对话
@@ -337,16 +366,33 @@ onMounted(() => {
         <div class="chat-messages" ref="chatContainer">
           <div v-for="(msg, idx) in messages" :key="idx" class="message-row" :class="msg.role">
             <div class="avatar" v-if="msg.role === 'assistant'">AI</div>
-            <div class="bubble" :class="msg.role">
-              <div
-                class="markdown-body"
-                v-if="msg.role === 'assistant' && msg.content"
-                v-html="renderMarkdown(msg.content)"
-              ></div>
-              <span class="bubble-text" v-else-if="msg.content">{{ msg.content }}</span>
-              <span class="typing-indicator" v-else-if="loading && idx === messages.length - 1">
-                <span class="dot"></span><span class="dot"></span><span class="dot"></span>
-              </span>
+            <div class="bubble-wrapper" v-if="msg.role === 'assistant'">
+              <div class="bubble assistant">
+                <div
+                  class="markdown-body"
+                  v-if="msg.content"
+                  v-html="renderMarkdown(msg.content)"
+                ></div>
+                <span class="typing-indicator" v-else-if="loading && idx === messages.length - 1">
+                  <span class="dot"></span><span class="dot"></span><span class="dot"></span>
+                </span>
+              </div>
+              <div v-if="msg.references && msg.references.length" class="ref-tags">
+                <span class="ref-label">参考论文：</span>
+                <el-tag
+                  v-for="ref in msg.references"
+                  :key="ref.id"
+                  size="small"
+                  effect="plain"
+                  class="ref-tag"
+                  @click="navigateToPaper(ref.id)"
+                >
+                  {{ ref.title.length > 40 ? ref.title.slice(0, 40) + '...' : ref.title }}
+                </el-tag>
+              </div>
+            </div>
+            <div class="bubble user" v-if="msg.role === 'user'">
+              <span class="bubble-text">{{ msg.content }}</span>
             </div>
             <div class="avatar user-avatar" v-if="msg.role === 'user'">我</div>
           </div>
@@ -372,10 +418,23 @@ onMounted(() => {
 </template>
 
 <style scoped>
+.chat-page {
+  height: 100%;
+  min-height: 0;
+}
+
 .chat-layout {
+  flex: 1;
+  min-height: 0;
   display: grid;
   grid-template-columns: 320px minmax(0, 1fr);
   gap: 20px;
+  align-items: stretch;
+  overflow: hidden;
+}
+
+.chat-layout--collapsed {
+  grid-template-columns: 88px minmax(0, 1fr);
 }
 
 .prompt-tags {
@@ -384,27 +443,43 @@ onMounted(() => {
   display: flex;
   flex-wrap: wrap;
   gap: 10px;
-  margin-top: 20px;
+  margin-top: 14px;
 }
 
 .prompt-tag {
   cursor: pointer;
   border-color: rgba(255, 255, 255, 0.16);
+  --el-tag-font-size: 12px;
 }
 
 .conversation-panel {
   display: flex;
   flex-direction: column;
-  min-height: 720px;
+  min-height: 0;
+  height: 100%;
+  overflow: hidden;
 }
 
 .conversation-header {
   display: flex;
-  flex-direction: column;
-  gap: 14px;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+}
+
+.conversation-actions {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.conversation-panel--collapsed {
+  padding: 18px 12px;
 }
 
 .conversation-list {
+  flex: 1;
+  min-height: 0;
   display: flex;
   flex-direction: column;
   gap: 12px;
@@ -468,7 +543,9 @@ onMounted(() => {
 .chat-card {
   display: flex;
   flex-direction: column;
-  min-height: 720px;
+  min-height: 0;
+  height: 100%;
+  overflow: hidden;
 }
 
 .chat-toolbar {
@@ -481,6 +558,7 @@ onMounted(() => {
 
 .chat-messages {
   flex: 1;
+  min-height: 0;
   overflow-y: auto;
   padding: 20px;
   border-radius: 22px;
@@ -522,7 +600,7 @@ onMounted(() => {
 }
 
 .bubble {
-  max-width: 70%;
+  max-width: 88%;
   padding: 10px 14px;
   border-radius: 12px;
   line-height: 1.6;
@@ -600,6 +678,51 @@ onMounted(() => {
   box-shadow: none;
 }
 
+.bubble-wrapper {
+  flex: 1;
+  min-width: 0;
+  max-width: calc(100% - 46px);
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+
+.message-row.assistant .bubble {
+  width: 100%;
+  max-width: none;
+}
+
+.message-row.user .bubble {
+  width: min(88%, 980px);
+}
+
+.ref-tags {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 6px;
+  padding-left: 2px;
+}
+
+.ref-label {
+  font-size: 12px;
+  color: #64748b;
+  flex-shrink: 0;
+}
+
+.ref-tag {
+  cursor: pointer;
+  max-width: 280px;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.ref-tag:hover {
+  color: #2563eb;
+  border-color: #2563eb;
+}
+
 .bubble-text {
   white-space: pre-wrap;
 }
@@ -642,13 +765,21 @@ onMounted(() => {
 }
 
 @media (max-width: 1024px) {
+  .chat-page {
+    height: auto;
+  }
+
   .chat-layout {
+    flex: none;
     grid-template-columns: 1fr;
+    overflow: visible;
   }
 
   .conversation-panel,
   .chat-card {
     min-height: auto;
+    height: auto;
+    overflow: visible;
   }
 }
 
