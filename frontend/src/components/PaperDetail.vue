@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import {computed, nextTick, onMounted, onUnmounted, ref} from 'vue'
+import {computed, nextTick, onMounted, onUnmounted, ref, watch} from 'vue'
 import {useRoute, useRouter} from 'vue-router'
 import {ElMessage} from 'element-plus'
 import {GetPaperDetail, ChatStream} from '@/request/api'
@@ -31,13 +31,51 @@ interface QAMessage {
   content: string
 }
 
-const qaMessages = ref<QAMessage[]>([
+const DEFAULT_QA_MESSAGES: QAMessage[] = [
   {role: 'assistant', content: '我已阅读了这篇论文的全文，你可以问我任何问题。'},
-])
+]
+const qaMessages = ref<QAMessage[]>([...DEFAULT_QA_MESSAGES])
 const qaInput = ref('')
 const qaLoading = ref(false)
 const qaContainer = ref<HTMLElement | null>(null)
 const qaQuickPrompts = ['核心方法', '主要贡献', '局限性', '与哪些工作相关']
+const activePaperId = ref<number | null>(null)
+
+function getQACacheKey(paperId: number) {
+  return `paper_detail_qa_messages_${paperId}`
+}
+
+function restoreQAMessages(paperId: number) {
+  try {
+    const raw = localStorage.getItem(getQACacheKey(paperId))
+    if (!raw) {
+      qaMessages.value = [...DEFAULT_QA_MESSAGES]
+      return
+    }
+    const parsed = JSON.parse(raw)
+    if (!Array.isArray(parsed)) {
+      qaMessages.value = [...DEFAULT_QA_MESSAGES]
+      return
+    }
+    const messages = parsed
+      .filter((item: any) => (item?.role === 'user' || item?.role === 'assistant') && typeof item?.content === 'string')
+      .map((item: any) => ({
+        role: item.role,
+        content: item.content,
+      }))
+    qaMessages.value = messages.length > 0 ? messages : [...DEFAULT_QA_MESSAGES]
+  } catch {
+    qaMessages.value = [...DEFAULT_QA_MESSAGES]
+  }
+}
+
+function persistQAMessages() {
+  if (activePaperId.value == null) return
+  localStorage.setItem(
+    getQACacheKey(activePaperId.value),
+    JSON.stringify(qaMessages.value),
+  )
+}
 
 function qaScrollToBottom() {
   nextTick(() => {
@@ -116,6 +154,8 @@ onMounted(async () => {
     router.push('/index/paperSearch')
     return
   }
+  activePaperId.value = paperId
+  restoreQAMessages(paperId)
   try {
     paper.value = await GetPaperDetail(paperId)
     if (paper.value?.has_pdf) {
@@ -134,6 +174,10 @@ onUnmounted(() => {
     URL.revokeObjectURL(pdfBlobUrl.value)
   }
 })
+
+watch(qaMessages, () => {
+  persistQAMessages()
+}, {deep: true})
 </script>
 
 <template>

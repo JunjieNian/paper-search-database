@@ -136,9 +136,30 @@ def search(query: str, top_k: int = 20):
 
 def get_embeddings_by_ids(paper_ids: list[str]):
     """获取指定论文的 embedding 向量。"""
+    if not paper_ids:
+        return []
+
     collection = get_collection()
-    results = collection.get(ids=paper_ids, include=["embeddings"])
-    return results.get("embeddings", [])
+    unique_ids: list[str] = []
+    seen_ids: set[str] = set()
+    for paper_id in paper_ids:
+        if paper_id in seen_ids:
+            continue
+        seen_ids.add(paper_id)
+        unique_ids.append(paper_id)
+
+    results = collection.get(ids=unique_ids, include=["embeddings"])
+    result_ids = results.get("ids", [])
+    result_embeddings = results.get("embeddings", [])
+    embedding_map = {
+        paper_id: embedding
+        for paper_id, embedding in zip(result_ids, result_embeddings)
+    }
+    return [
+        embedding_map[paper_id]
+        for paper_id in paper_ids
+        if paper_id in embedding_map
+    ]
 
 
 # ---- Chunk collection (paper full-text chunks) ----

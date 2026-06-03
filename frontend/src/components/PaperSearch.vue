@@ -7,6 +7,7 @@ import {GetSearchHistory, RecordClick, SearchPapers} from '@/request/api'
 
 const router = useRouter()
 const RERANK_STORAGE_KEY = 'paper_search_enable_rerank'
+const SEARCH_STATE_STORAGE_KEY = 'paper_search_page_state'
 
 const searchQuery = ref('')
 const papers = ref<any[]>([])
@@ -25,9 +26,43 @@ const exampleQueries = [
   'approximate query processing',
 ]
 
+interface SearchPageState {
+  searchQuery: string
+  papers: any[]
+  total: number
+  currentPage: number
+  searched: boolean
+}
+
 watch(rerankEnabled, value => {
   localStorage.setItem(RERANK_STORAGE_KEY, String(value))
 })
+
+function persistSearchState() {
+  const state: SearchPageState = {
+    searchQuery: searchQuery.value,
+    papers: papers.value,
+    total: total.value,
+    currentPage: currentPage.value,
+    searched: searched.value,
+  }
+  sessionStorage.setItem(SEARCH_STATE_STORAGE_KEY, JSON.stringify(state))
+}
+
+function restoreSearchState() {
+  try {
+    const raw = sessionStorage.getItem(SEARCH_STATE_STORAGE_KEY)
+    if (!raw) return
+    const parsed = JSON.parse(raw) as Partial<SearchPageState>
+    searchQuery.value = typeof parsed.searchQuery === 'string' ? parsed.searchQuery : ''
+    papers.value = Array.isArray(parsed.papers) ? parsed.papers : []
+    total.value = typeof parsed.total === 'number' ? parsed.total : 0
+    currentPage.value = typeof parsed.currentPage === 'number' ? parsed.currentPage : 1
+    searched.value = parsed.searched === true
+  } catch {
+    sessionStorage.removeItem(SEARCH_STATE_STORAGE_KEY)
+  }
+}
 
 const loadHistory = async () => {
   try {
@@ -90,7 +125,12 @@ const useHistoryQuery = (query: string) => {
   doSearch()
 }
 
+watch([searchQuery, papers, total, currentPage, searched], () => {
+  persistSearchState()
+}, {deep: true})
+
 onMounted(() => {
+  restoreSearchState()
   loadHistory()
 })
 </script>
