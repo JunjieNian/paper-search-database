@@ -24,6 +24,16 @@ bash stop_all.sh
 
 > MySQL 需预先启动。
 
+## 论文 PDF 数据
+
+仓库不包含论文 PDF 文件，随仓库另附 `pdf_store.zip`。收到后解压到 `backend/` 目录下即可：
+
+```bash
+unzip pdf_store.zip -d backend/
+```
+
+解压后目录结构应为 `backend/pdf_store/*.pdf`（共 120 个文件）。该目录供论文详情页 PDF 下载、全文分块 Embedding 及 RAG 问答使用。
+
 ## 新机器从零启动
 
 1. **克隆仓库并安装依赖**
