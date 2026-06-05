@@ -162,6 +162,12 @@ async def index_chunks(req: schemas.ChunkIndexRequest):
     return schemas.IndexResponse(indexed_count=count)
 
 
+@app.post("/delete-paper", response_model=schemas.DeletePaperResponse)
+async def delete_paper(req: schemas.DeletePaperRequest):
+    result = vector_store.delete_paper_vectors(req.paper_id)
+    return schemas.DeletePaperResponse(**result)
+
+
 @app.post("/search-chunks", response_model=schemas.ChunkSearchResponse)
 async def search_chunks(req: schemas.ChunkSearchRequest):
     results = vector_store.search_chunks(

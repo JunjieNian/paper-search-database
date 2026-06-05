@@ -11,6 +11,7 @@ import Register from "@/pages/Register.vue";
 import PaperSearch from "@/components/PaperSearch.vue";
 import PaperDetail from "@/components/PaperDetail.vue";
 import PaperRecommend from "@/components/PaperRecommend.vue";
+import MyPapers from "@/components/MyPapers.vue";
 
 const routes =
     [
@@ -67,6 +68,11 @@ const routes =
                     path: 'paperRecommend',
                     name: 'PaperRecommend',
                     component: PaperRecommend,
+                },
+                {
+                    path: 'myPapers',
+                    name: 'MyPapers',
+                    component: MyPapers,
                 },
             ]
 

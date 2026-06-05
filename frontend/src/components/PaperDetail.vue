@@ -12,6 +12,15 @@ function renderMarkdown(text: string): string {
 
 const route = useRoute()
 const router = useRouter()
+
+function goBack() {
+  // 优先返回来源页（搜索 / 我的论文 / 推荐），无历史时兜底到搜索页
+  if (window.history.length > 1) {
+    router.back()
+  } else {
+    router.push('/index/paperSearch')
+  }
+}
 const paper = ref<any>(null)
 const loading = ref(true)
 
@@ -183,7 +192,7 @@ watch(qaMessages, () => {
 <template>
   <div class="page-shell" v-loading="loading">
     <section class="page-card detail-toolbar">
-      <el-button text @click="router.push('/index/paperSearch')">← 返回搜索</el-button>
+      <el-button text @click="goBack">← 返回</el-button>
       <el-link v-if="paper?.url" :href="paper.url" target="_blank" rel="noopener" type="primary">
         打开原文链接
       </el-link>

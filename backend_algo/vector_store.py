@@ -201,6 +201,22 @@ def index_chunks(chunks: list[dict]):
     return len(ids)
 
 
+def delete_paper_vectors(paper_id: int) -> dict:
+    """删除 papers collection 与 paper_chunks collection 中该论文的所有向量。"""
+    result = {"paper_removed": False, "chunks_removed": False}
+    try:
+        get_collection().delete(ids=[str(paper_id)])
+        result["paper_removed"] = True
+    except Exception as exc:
+        print(f"[delete] papers collection delete failed: {exc}")
+    try:
+        get_chunk_collection().delete(where={"paper_id": paper_id})
+        result["chunks_removed"] = True
+    except Exception as exc:
+        print(f"[delete] paper_chunks collection delete failed: {exc}")
+    return result
+
+
 def search_chunks(query: str, top_k: int = 5, paper_id: int | None = None):
     """检索论文分块。paper_id=None 时全库搜索，否则按 paper_id 过滤。"""
     collection = get_chunk_collection()

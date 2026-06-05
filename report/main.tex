@@ -104,11 +104,11 @@
 
 \subsection{项目背景}
 
-随着学术论文数量的爆炸式增长，研究者在海量文献中高效检索并发现有价值的论文成为一项重要需求。传统的关键词匹配搜索仅能捕获字面重合，无法理解查询的语义意图。本项目面向数据库与数据管理领域，构建了一套融合\textbf{向量语义检索}、\textbf{基于Embedding质心的个性化推荐}、\textbf{可选精排}、\textbf{PDF全文提取与分块Embedding}以及\textbf{基于RAG的大语言模型学术问答}的全栈论文搜索与推荐系统。
+随着学术论文数量的爆炸式增长，研究者在海量文献中高效检索并发现有价值的论文成为一项重要需求。传统的关键词匹配搜索仅能捕获字面重合，无法理解查询的语义意图。本项目面向数据库与数据管理领域，构建了一套融合\textbf{向量语义检索}、\textbf{基于Embedding质心的个性化推荐}、\textbf{可选精排}、\textbf{PDF全文提取与分块Embedding}、\textbf{基于RAG的大语言模型学术问答}以及\textbf{用户论文上传（arXiv链接一键导入）}的全栈论文搜索与推荐系统。用户既可检索系统预置的公共论文库，也可上传自己关注的论文，上传后的论文自动进入个人专属库并参与语义搜索、个性化推荐与AI问答。
 
 \subsection{选题说明}
 
-本项目选题为"\textbf{论文搜索与推荐}"：根据用户输入的自然语言查询，从论文库中语义搜索论文；根据用户的点击浏览历史，个性化推荐相关论文；同时集成LLM多轮对话，辅助用户理解论文内容。
+本项目选题为"\textbf{论文搜索与推荐}"：根据用户输入的自然语言查询，从论文库中语义搜索论文；根据用户的点击浏览历史，个性化推荐相关论文；同时集成LLM多轮对话，辅助用户理解论文内容。在此基础上进一步扩展了\textbf{用户自助上传论文}能力——用户粘贴arXiv链接即可由系统自动提取元数据、下载PDF并建立索引，使个人论文同样可被搜索、推荐与问答（仅上传者本人可见）。之所以采用\textbf{链接导入}而非直接上传PDF文件，是因为搜索与推荐的质量高度依赖规范、完整的结构化元数据（标题、摘要、关键词等）；链接导入可从权威来源（OpenAlex/arXiv）自动获取这些元数据与原文PDF，既免去用户手工录入、避免字段缺失或格式不一，又保证了语义向量化所依赖的文本质量。
 
 \subsection{技术栈总览}
 
@@ -174,10 +174,11 @@
 \node[layer, fill=blue!8] (ui) at (0, 6) {};
 \node[font=\small\bfseries, anchor=west] at (-6.8, 6.5) {界面层};
 \node[note, anchor=east] at (6.8, 6.5) {Vue 3 + Element Plus\quad :5173};
-\node[comp, fill=blue!15] (search_ui) at (-4, 5.8) {论文搜索};
-\node[comp, fill=blue!15] (rec_ui)    at (-1, 5.8) {论文推荐};
-\node[comp, fill=blue!15] (chat_ui)   at (2, 5.8)  {AI对话};
-\node[comp, fill=blue!15] (user_ui)   at (5, 5.8)  {用户管理};
+\node[comp, fill=blue!15] (search_ui) at (-5.2, 5.8) {论文搜索};
+\node[comp, fill=blue!15] (rec_ui)    at (-2.6, 5.8) {论文推荐};
+\node[comp, fill=blue!15] (mine_ui)   at (0, 5.8)    {我的论文};
+\node[comp, fill=blue!15] (chat_ui)   at (2.6, 5.8)  {AI对话};
+\node[comp, fill=blue!15] (user_ui)   at (5.2, 5.8)  {用户管理};
 
 % 业务层
 \node[layer, fill=green!8] (biz) at (0, 3.5) {};
@@ -233,9 +234,13 @@
   \end{itemize}
 
 \item \textbf{全文索引流程}：PDF全文经PyMuPDF提取 $\to$ 按约800词/块分块（100词重叠）$\to$ 批量调用算法层\api{/index-chunks} $\to$ Embedding后存入ChromaDB \code{paper\_chunks} collection。
+
+\item \textbf{论文上传与导入流程}：用户在"我的论文"页粘贴arXiv链接 $\to$ 业务层解析arXiv~ID并调用OpenAlex~API提取规范元数据（标题、作者、摘要、年份、关键词）$\to$ 用户确认/微调后提交 $\to$ 业务层将论文写入MySQL（以\code{owner\_id}标记归属）并从arxiv.org下载PDF原文 $\to$ 同时调用算法层\api{/index}（摘要级向量，供搜索/推荐）与\api{/index-chunks}（全文分块，供问答/RAG）建立双重索引，使上传论文即刻可被检索与问答。
 \end{enumerate}
 
-\textbf{降级机制}：当算法层不可用时，搜索自动降级为MySQL \code{LIKE}模糊匹配，保障系统基本可用性。
+\textbf{可见性隔离}：\code{papers}表通过\code{owner\_id}字段区分论文归属——系统预置论文\code{owner\_id}为NULL，对所有用户公共可见；用户上传论文\code{owner\_id}为其用户ID，仅本人可见。业务层在搜索、推荐、RAG检索以及论文详情/PDF/问答各环节，统一按"\code{owner\_id IS NULL OR owner\_id = 当前用户}"过滤，确保他人的私有论文不会出现在自己的任何检索结果中。
+
+\textbf{降级机制}：当算法层不可用时，搜索自动降级为MySQL \code{LIKE}模糊匹配（同样施加上述可见性过滤），保障系统基本可用性。
 
 
 % ════════════════════════════════════════════════════
@@ -287,6 +292,7 @@
   year: INT \\
   keywords: VARCHAR(512) \\
   url: VARCHAR(512) \\
+  owner\_id: INT (FK $\to$ users.id, NULL) \\
   created\_at: DATETIME
   \end{tabular}
 };
@@ -315,6 +321,8 @@
 \node[rel] (r1) at (3.0, -1.9) {1:N};
 \node[rel] (r2) at (8.0, -1.9) {1:N};
 \node[rel] (r3) at (-0.3, -1.9) {1:N};
+\node[rel] (r4) at (5.0, 0) {1:N};
+\node[font=\scriptsize, text=gray] at (5.0, 0.55) {上传};
 
 \draw[line] (users) -- (r1);
 \draw[arr] (r1) -- (clicks);
@@ -322,6 +330,8 @@
 \draw[arr] (r2) -- (clicks);
 \draw[line] (users) -- (r3);
 \draw[arr] (r3) -- (history);
+\draw[line] (users) -- (r4);
+\draw[arr] (r4) -- (papers);
 
 \end{tikzpicture}
 }
@@ -369,6 +379,7 @@
 \code{year}        & INT            &                     & 发表年份 \\
 \code{keywords}    & VARCHAR(512)   &                     & 关键词（逗号分隔）\\
 \code{url}         & VARCHAR(512)   &                     & 论文来源链接 \\
+\code{owner\_id}   & INT            & FK $\to$ \code{users.id}, NULL, INDEX & 上传者；NULL表示系统公共论文 \\
 \code{created\_at} & DATETIME       & DEFAULT UTC\_NOW    & 入库时间 \\
 \bottomrule
 \end{tabular}
@@ -414,6 +425,7 @@
 \item \code{users} 1:N \code{user\_clicks}——一个用户可有多条点击记录。
 \item \code{papers} 1:N \code{user\_clicks}——一篇论文可被多个用户点击。
 \item \code{users} 1:N \code{search\_history}——一个用户可有多条搜索历史。
+\item \code{users} 1:N \code{papers}（上传关系）——一个用户可上传多篇论文（\code{papers.owner\_id}指向\code{users.id}）；\code{owner\_id}为NULL的论文是系统预置的公共论文，不属于任何特定用户。
 \item \code{user\_clicks}构成\code{users}与\code{papers}之间的\textbf{多对多关系}（附带时间戳的关联表）。
 \end{itemize}
 
@@ -457,8 +469,14 @@
 \midrule
 \multicolumn{4}{l}{\textit{论文管理}} \\
 \code{/papers/}              & GET  & 是 & 论文列表（分页）\\
-\code{/papers/\{id\}}        & GET  & 是 & 论文详情 \\
+\code{/papers/\{id\}}        & GET  & 是 & 论文详情（按owner过滤）\\
+\code{/papers/mine}          & GET  & 是 & 我上传的论文列表 \\
 \code{/papers/bulk}          & POST & 是 & 批量导入 \\
+\midrule
+\multicolumn{4}{l}{\textit{论文上传（arXiv导入）}} \\
+\code{/papers/preview-arxiv} & POST & 是 & 解析arXiv链接，OpenAlex提取元数据（不落库）\\
+\code{/papers/import-arxiv}  & POST & 是 & 导入论文：下载PDF + 双重索引 \\
+\code{/papers/\{id\}}        & DELETE & 是 & 删除自己上传的论文（含向量/PDF）\\
 \midrule
 \multicolumn{4}{l}{\textit{搜索与推荐}} \\
 \code{/search}               & POST & 是 & 语义搜索 + 降级SQL \\
@@ -485,8 +503,8 @@
 \begin{enumerate}
 \item 将查询记录写入\code{search\_history}表。
 \item 将请求转发至算法层\api{/search}端点，附带\code{query}、\code{use\_rerank}、\code{rerank\_provider}、\code{recall\_k}等参数。
-\item 算法层返回\code{paper\_id + score}列表后，业务层从MySQL批量查询论文元数据并拼接。
-\item 若算法层不可用，则降级为SQL \code{LIKE}搜索（匹配\code{title}、\code{abstract}、\code{keywords}、\code{authors}字段）。
+\item 算法层返回\code{paper\_id + score}列表后，业务层从MySQL批量查询论文元数据，并按\code{owner\_id}可见性（公共论文 + 本人上传）过滤后再分页拼接。
+\item 若算法层不可用，则降级为SQL \code{LIKE}搜索（匹配\code{title}、\code{abstract}、\code{keywords}、\code{authors}字段，同样附加\code{owner\_id}可见性过滤）。
 \end{enumerate}
 
 \subsubsection{推荐代理}
@@ -508,9 +526,18 @@
 \item \textbf{纯对话模式}（\code{use\_rag=false}）：保留原有逻辑，仅注入用户最近5篇已读论文摘要。
 \end{enumerate}
 
+\subsubsection{论文上传与arXiv导入}
 
-% ════════════════════════════════════════════════════
-% 第五章：算法层实现
+为支持用户导入自己关注的论文，业务层新增了\code{paper\_ingest}模块与三个接口，完整流程分两步：
+
+\begin{enumerate}
+\item \textbf{解析预览}（\api{POST /papers/preview-arxiv}）：从用户粘贴的链接中用正则解析出arXiv~ID（兼容\code{/abs/}、\code{/pdf/}、带版本号\code{vN}、旧式\code{cs/0112017}等形式），再以arXiv的DataCite~DOI（\code{10.48550/arXiv.<id>}）调用OpenAlex~API查询元数据，重建摘要（倒排索引还原）、截断作者与关键词后返回前端供用户确认与编辑；若OpenAlex未收录则返回空预览，由用户手动补全。
+\item \textbf{确认导入}（\api{POST /papers/import-arxiv}）：将用户确认后的元数据写入MySQL（\code{owner\_id=}当前用户，先\code{flush}取得自增主键但暂不提交）$\to$ 从\code{arxiv.org/pdf/<id>}下载PDF原文并校验\code{\%PDF}魔数，失败则回滚 $\to$ 成功后提交并调用算法层\api{/index}（摘要级向量）与\api{/index-chunks}（PyMuPDF提取全文并分块）建立双重索引。
+\end{enumerate}
+
+删除接口（\api{DELETE /papers/\{id\}}）仅允许删除本人上传的论文，会级联清除本地PDF文件、两个ChromaDB collection中的向量（经算法层\api{/delete-paper}）以及MySQL记录与点击历史。
+
+\textbf{数据源选择}：实测部署环境下arXiv官方元数据API（\code{export.arxiv.org}）连通性不稳定，而OpenAlex~API稳定可达、\code{arxiv.org}的PDF可直接下载，故采用"OpenAlex取元数据 + arxiv.org取PDF"的组合，兼顾元数据规范性与原文可得性。
 % ════════════════════════════════════════════════════
 \section{算法层实现}
 
@@ -601,10 +628,12 @@ collection.upsert(
 )
 \end{lstlisting}
 
-算法层提供两个新端点：
+算法层提供以下索引/检索/删除端点：
 \begin{itemize}
-\item \api{POST /index-chunks}：批量索引分块（提取脚本调用）
+\item \api{POST /index}：索引论文摘要级向量至\code{papers} collection（种子导入与用户上传共用）
+\item \api{POST /index-chunks}：批量索引全文分块至\code{paper\_chunks} collection
 \item \api{POST /search-chunks}：检索分块，支持\code{paper\_id}过滤（全库或单篇论文检索）
+\item \api{POST /delete-paper}：按\code{paper\_id}从\code{papers}与\code{paper\_chunks}两个collection中删除该论文的全部向量（用户删除上传论文时调用）
 \end{itemize}
 
 \subsection{LLM学术问答与RAG}
@@ -643,6 +672,7 @@ collection.upsert(
 论文搜索  & \code{PaperSearch.vue}   & 语义搜索 + 搜索历史标签 + Rerank开关 + 分页 \\
 论文详情  & \code{PaperDetail.vue}   & 标题、摘要、PDF阅读器、\textbf{AI论文问答} \\
 论文推荐  & \code{PaperRecommend.vue}& 基于浏览历史的个性化推荐列表 \\
+我的论文  & \code{MyPapers.vue}      & \textbf{arXiv链接导入} + 可编辑元数据表单 + 我的论文列表（可删除）\\
 AI对话    & \code{Chat.vue}          & SSE流式渲染 + \textbf{RAG检索增强} + 参考论文 \\
 用户管理  & \code{Profile.vue}等     & 个人信息、用户列表、添加用户 \\
 \bottomrule
@@ -656,6 +686,7 @@ AI对话    & \code{Chat.vue}          & SSE流式渲染 + \textbf{RAG检索增�
 \item \textbf{Token持久化}：JWT存储在\code{localStorage}，Axios拦截器自动注入\code{Authorization}头。
 \item \textbf{流式渲染}：AI对话使用\code{fetch} + \code{ReadableStream}接收SSE，通过\code{marked}库实时渲染Markdown。
 \item \textbf{论文问答}：论文详情页内嵌AI问答框，提供快捷提问（"核心方法"、"主要贡献"等），基于论文全文分块回答。
+\item \textbf{论文上传}：在"我的论文"页粘贴arXiv链接即可解析出元数据并填入可编辑表单，确认后一键导入；导入的论文复用论文详情页阅读（PDF + AI问答），列表支持删除。
 \item \textbf{RAG参考引用}：AI对话页自动检索全库论文分块，回答后显示参考论文标签，点击可跳转至对应详情页。
 \item \textbf{搜索历史}：去重后以Element Plus Tag组件展示，点击标签可快速复搜。
 \item \textbf{Rerank开关}：搜索页面提供精排开关，设置持久化到\code{localStorage}。
@@ -677,6 +708,7 @@ AI对话    & \code{Chat.vue}          & SSE流式渲染 + \textbf{RAG检索增�
 \code{/index/paperSearch}      & PaperSearch.vue     & 论文搜索 \\
 \code{/index/paperDetail/:id}  & PaperDetail.vue     & 论文详情 \\
 \code{/index/paperRecommend}   & PaperRecommend.vue  & 论文推荐 \\
+\code{/index/myPapers}         & MyPapers.vue        & 我的论文（上传/管理）\\
 \code{/index/chat}             & Chat.vue            & AI对话 \\
 \code{/index/checkUserInfo}    & CheckUserInfo.vue   & 用户管理 \\
 \bottomrule
@@ -1065,6 +1097,7 @@ cd backend && python extract_chunks.py    # PDF全文提取+分块索引
 \item \textbf{论文搜索}：在侧边栏点击"论文搜索"，输入自然语言查询（如"query optimization in distributed databases"），点击搜索。支持切换是否启用Rerank精排。
 \item \textbf{查看论文}：点击搜索结果中的论文标题，查看论文详情（标题、作者、摘要、PDF全文）。
 \item \textbf{论文问答}：在论文详情页底部的"AI论文问答"区域，可以直接就该论文提问（如"核心方法"、"主要贡献"），AI基于论文全文分块回答。
+\item \textbf{上传我的论文}：点击侧边栏"我的论文"，粘贴arXiv论文链接（如\code{https://arxiv.org/abs/2310.06825}）并点击"解析"，系统自动提取标题、作者、摘要等信息填入表单；确认或微调后点击"确认导入"，论文即加入个人论文库，可像系统论文一样阅读、问答，并出现在你（且仅你本人）的搜索与推荐结果中；列表中可随时删除已上传论文。
 \item \textbf{论文推荐}：浏览若干论文后，点击侧边栏"论文推荐"，系统将根据浏览历史推荐相关论文。
 \item \textbf{AI对话}：点击侧边栏"AI对话"，与LLM进行多轮学术问答。系统自动检索全库论文全文分块（RAG），回答后显示参考论文标签，点击标签可跳转至对应论文详情。
 \item \textbf{搜索历史}：搜索页面上方显示去重后的搜索历史标签，点击可快速复搜。
@@ -1121,7 +1154,8 @@ mysql_fastapi_vue_project/
 |   |-- security.py               # 密码哈希
 |   |-- seed_papers.py            # 种子数据导入
 |   |-- extract_chunks.py         # PDF全文提取+分块索引
-|   |-- pdf_store/                # 120篇论文PDF文件
+|   |-- paper_ingest.py           # arXiv导入: OpenAlex元数据+PDF下载+分块
+|   |-- pdf_store/                # 论文PDF文件（含用户上传）
 |   `-- seed_data/papers.json     # 120篇论文数据
 |
 |-- backend_algo/                 # 算法层 (FastAPI + ChromaDB)
@@ -1154,13 +1188,13 @@ mysql_fastapi_vue_project/
 本项目完整实现了一套学术论文搜索与推荐系统，严格遵循课程要求的三层分层架构（Vue界面层 + FastAPI业务层 + FastAPI算法层）。系统主要成果包括：
 
 \begin{enumerate}
-\item \textbf{数据库设计}：设计了包含\code{users}、\code{papers}、\code{user\_clicks}、\code{search\_history}四张表的关系数据库，支持用户管理、论文存储和行为追踪。
+\item \textbf{数据库设计}：设计了包含\code{users}、\code{papers}、\code{user\_clicks}、\code{search\_history}四张表的关系数据库，支持用户管理、论文存储和行为追踪；其中\code{papers.owner\_id}自引用\code{users}表，实现论文归属标记与"个人/公共"论文的可见性隔离。
 
-\item \textbf{业务层实现}：基于FastAPI实现了完整的RESTful API，包括JWT认证、论文CRUD、搜索/推荐代理、PDF管理以及三模式LLM对话（论文问答/RAG/纯对话），并实现了算法层不可用时的SQL降级机制。
+\item \textbf{业务层实现}：基于FastAPI实现了完整的RESTful API，包括JWT认证、论文CRUD、搜索/推荐代理、PDF管理、三模式LLM对话（论文问答/RAG/纯对话），以及\textbf{用户论文上传（arXiv链接导入OpenAlex元数据+arxiv.org下载PDF+双重索引）}与基于\code{owner\_id}的全链路可见性隔离，并实现了算法层不可用时的SQL降级机制。
 
 \item \textbf{算法层实现}：实现了基于ChromaDB的向量语义检索、Embedding质心推荐、多种Reranker精排策略、PDF全文提取与分块Embedding（约2080个chunks），以及基于全文分块的RAG检索增强生成。
 
-\item \textbf{前端界面}：基于Vue~3 + Element Plus构建了包含搜索、推荐、详情、对话等7个页面的完整前端，支持流式Markdown渲染、论文详情页内嵌AI问答、RAG对话参考论文引用标签、搜索历史等特性。
+\item \textbf{前端界面}：基于Vue~3 + Element Plus构建了包含搜索、推荐、详情、我的论文、对话等8个页面的完整前端，支持流式Markdown渲染、论文详情页内嵌AI问答、RAG对话参考论文引用标签、arXiv链接上传论文、搜索历史等特性。
 
 \item \textbf{算法实验}：设计并执行了8组完整实验，涵盖消融分析、性能评估、查询优化和可扩展性测试，验证了向量检索相比关键词搜索P@5提升52.2\%（0.542$\to$0.825）、推荐系统Hit Rate达0.727、端到端搜索延迟约217ms等核心指标。
 \end{enumerate}

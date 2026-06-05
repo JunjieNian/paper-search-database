@@ -30,6 +30,8 @@ class Paper(Base):
     keywords = Column(String(512))
     url = Column(String(512))
     has_pdf = Column(Boolean, default=False)
+    # NULL = 公共/系统论文（对所有人可见）；非 NULL = 用户上传，仅该用户可见
+    owner_id = Column(Integer, ForeignKey("users.id"), nullable=True, index=True)
     created_at = Column(DateTime, default=datetime.utcnow)
 
 

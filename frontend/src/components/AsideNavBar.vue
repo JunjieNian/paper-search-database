@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import {ArrowLeftBold, ArrowRightBold, ChatDotRound, Search, Star, UserFilled} from '@element-plus/icons-vue'
+import {ArrowLeftBold, ArrowRightBold, ChatDotRound, Folder, Search, Star, UserFilled} from '@element-plus/icons-vue'
 import {computed} from 'vue'
 import {useRoute} from 'vue-router'
 
@@ -18,6 +18,7 @@ const route = useRoute()
 const activeMenu = computed(() => {
   if (route.path.startsWith('/index/paperSearch')) return '/index/paperSearch'
   if (route.path.startsWith('/index/paperRecommend')) return '/index/paperRecommend'
+  if (route.path.startsWith('/index/myPapers')) return '/index/myPapers'
   if (route.path.startsWith('/index/chat')) return '/index/chat'
   return '/index/'
 })
@@ -37,6 +38,11 @@ const menuItems = [
     index: '/index/paperRecommend',
     label: '智能推荐',
     icon: Star,
+  },
+  {
+    index: '/index/myPapers',
+    label: '我的论文',
+    icon: Folder,
   },
   {
     index: '/index/chat',

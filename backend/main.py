@@ -12,6 +12,7 @@ from pydantic import BaseModel
 from sqlalchemy.orm import Session
 
 import crud, models, schemas
+import paper_ingest
 from database import SessionLocal, engine
 from security import verify_password
 
@@ -33,6 +34,26 @@ ACCESS_TOKEN_EXPIRE_MINUTES = int(os.getenv("ACCESS_TOKEN_EXPIRE_MINUTES", "30")
 
 
 models.Base.metadata.create_all(bind=engine)
+
+
+def _ensure_paper_owner_column():
+    """幂等迁移：给已存在的 papers 表补 owner_id 列（create_all 不会改已存在的表）。"""
+    from sqlalchemy import inspect as sa_inspect, text as sa_text
+
+    inspector = sa_inspect(engine)
+    columns = {c["name"] for c in inspector.get_columns("papers")}
+    if "owner_id" in columns:
+        return
+    with engine.begin() as conn:
+        conn.execute(sa_text("ALTER TABLE papers ADD COLUMN owner_id INT NULL"))
+        try:
+            conn.execute(sa_text("CREATE INDEX ix_papers_owner_id ON papers (owner_id)"))
+        except Exception:
+            pass  # 索引已存在则忽略
+    print("[migrate] papers.owner_id column added")
+
+
+_ensure_paper_owner_column()
 
 
 class Token(BaseModel):
@@ -290,8 +311,8 @@ def _build_paper_qa_context(query: str, paper_id: int, db) -> str:
     return "\n".join(parts)
 
 
-def _build_rag_context(query: str, db) -> tuple[str, list[dict]]:
-    """构建 RAG 全库检索上下文，返回 (context_str, references)。"""
+def _build_rag_context(query: str, db, user_id: int) -> tuple[str, list[dict]]:
+    """构建 RAG 全库检索上下文，返回 (context_str, references)。仅含对当前用户可见的论文。"""
     chunks = _search_chunks(query, top_k=8)
     if not chunks:
         return "", []
@@ -311,7 +332,7 @@ def _build_rag_context(query: str, db) -> tuple[str, list[dict]]:
     references = []
     for pid in paper_ids:
         p = paper_map.get(pid)
-        if not p:
+        if not p or not crud.paper_visible_to(p, user_id):
             continue
         references.append({"id": pid, "title": p.title})
         parts.append(f"### {p.title} ({p.authors}, {p.venue} {p.year})\n")
@@ -337,12 +358,15 @@ async def chat_stream(
     references: list[dict] = []
 
     if chat_request.paper_id is not None:
-        # Mode A: Paper Q&A
+        # Mode A: Paper Q&A —— 校验该论文对当前用户可见
+        qa_paper = crud.get_paper(db, chat_request.paper_id)
+        if not qa_paper or not crud.paper_visible_to(qa_paper, current_user.id):
+            raise HTTPException(status_code=404, detail="Paper not found")
         qa_context = _build_paper_qa_context(user_query, chat_request.paper_id, db)
         system_content = PAPER_QA_SYSTEM_PROMPT + "\n" + qa_context
     elif chat_request.use_rag and user_query:
         # Mode B: RAG full library
-        rag_context, references = _build_rag_context(user_query, db)
+        rag_context, references = _build_rag_context(user_query, db, current_user.id)
         paper_context = _build_paper_context(db, user_id=current_user.id)
         system_content = SYSTEM_PROMPT + paper_context
         if rag_context:
@@ -398,6 +422,104 @@ async def bulk_create_papers(
     return schemas.PaperList(total=len(db_papers), papers=db_papers)
 
 
+# ---- 用户论文上传（arXiv 链接导入）----
+
+
+@app.get("/papers/mine", response_model=schemas.PaperList)
+async def list_my_papers(
+        current_user: Annotated[schemas.User, Depends(get_current_active_user)],
+        db: SessionDep,
+        skip: int = 0,
+        limit: int = 100,
+):
+    papers = crud.get_user_papers(db, owner_id=current_user.id, skip=skip, limit=limit)
+    total = crud.count_user_papers(db, owner_id=current_user.id)
+    return schemas.PaperList(total=total, papers=papers)
+
+
+@app.post("/papers/preview-arxiv", response_model=schemas.ArxivPreview)
+async def preview_arxiv(
+        current_user: Annotated[schemas.User, Depends(get_current_active_user)],
+        req: schemas.ArxivPreviewRequest,
+):
+    arxiv_id = paper_ingest.parse_arxiv_id(req.url)
+    if not arxiv_id:
+        raise HTTPException(
+            status_code=400,
+            detail="无法识别 arXiv 链接，请粘贴形如 https://arxiv.org/abs/2310.06825 的链接",
+        )
+    meta = paper_ingest.fetch_openalex_by_arxiv(arxiv_id)
+    if meta:
+        return schemas.ArxivPreview(**meta)
+    # OpenAlex 未收录（多见于老论文）：返回空预览，前端可手动补全
+    return schemas.ArxivPreview(
+        arxiv_id=arxiv_id,
+        url=paper_ingest.abs_url(arxiv_id),
+        source="none",
+    )
+
+
+@app.post("/papers/import-arxiv", response_model=schemas.Paper)
+async def import_arxiv(
+        current_user: Annotated[schemas.User, Depends(get_current_active_user)],
+        req: schemas.ArxivImportRequest,
+        db: SessionDep,
+):
+    if not req.title.strip():
+        raise HTTPException(status_code=400, detail="标题不能为空")
+    arxiv_id = paper_ingest.parse_arxiv_id(req.arxiv_id) or paper_ingest.parse_arxiv_id(req.url)
+    if not arxiv_id:
+        raise HTTPException(status_code=400, detail="无效的 arXiv ID")
+
+    paper_url = req.url or paper_ingest.abs_url(arxiv_id)
+
+    # 软去重：同一用户重复导入同一链接
+    if crud.get_user_paper_by_url(db, owner_id=current_user.id, url=paper_url):
+        raise HTTPException(status_code=409, detail="你已经导入过这篇论文了")
+
+    # 1) 落库（flush 取自增 id，先不 commit，等 PDF 下载成功）
+    req.url = paper_url
+    db_paper = crud.create_user_paper(db, req, owner_id=current_user.id)
+    paper_id = db_paper.id
+
+    # 2) 从 arxiv.org 下载 PDF
+    pdf_path = PDF_STORE / f"{paper_id}.pdf"
+    if not paper_ingest.download_arxiv_pdf(arxiv_id, pdf_path):
+        db.rollback()
+        pdf_path.unlink(missing_ok=True)
+        raise HTTPException(status_code=502, detail="从 arxiv.org 下载 PDF 失败，请稍后重试")
+    db_paper.has_pdf = True
+    db.commit()
+    db.refresh(db_paper)
+
+    # 3) 索引到搜索/推荐 collection（papers）
+    paper_ingest.index_paper_to_algo(paper_id, db_paper.title, db_paper.abstract, db_paper.keywords)
+    # 4) 提取全文分块并索引到问答/RAG collection（paper_chunks）
+    paper_ingest.index_chunks_to_algo(paper_id, pdf_path)
+
+    return db_paper
+
+
+@app.delete("/papers/{paper_id}")
+async def delete_my_paper(
+        current_user: Annotated[schemas.User, Depends(get_current_active_user)],
+        paper_id: int,
+        db: SessionDep,
+):
+    paper = crud.get_paper(db, paper_id)
+    if not paper:
+        raise HTTPException(status_code=404, detail="Paper not found")
+    if paper.owner_id != current_user.id:
+        raise HTTPException(status_code=403, detail="只能删除自己上传的论文")
+    # 删除算法层向量（papers + paper_chunks）
+    paper_ingest.delete_paper_from_algo(paper_id)
+    # 删除本地 PDF
+    (PDF_STORE / f"{paper_id}.pdf").unlink(missing_ok=True)
+    # 删除数据库记录（含点击历史）
+    crud.delete_paper(db, paper_id)
+    return {"status": "ok"}
+
+
 @app.get("/papers/{paper_id}", response_model=schemas.Paper)
 async def get_paper(
         current_user: Annotated[schemas.User, Depends(get_current_active_user)],
@@ -406,6 +528,8 @@ async def get_paper(
 ):
     paper = crud.get_paper(db, paper_id)
     if not paper:
+        raise HTTPException(status_code=404, detail="Paper not found")
+    if not crud.paper_visible_to(paper, current_user.id):
         raise HTTPException(status_code=404, detail="Paper not found")
     return paper
 
@@ -436,11 +560,12 @@ async def search_papers(
         algo_resp.raise_for_status()
         algo_results = algo_resp.json().get("results", [])
     except Exception:
-        # 算法层不可用时降级为 SQL 模糊搜索
+        # 算法层不可用时降级为 SQL 模糊搜索（仅本人可见范围）
         total, papers = crud.search_papers_by_keyword(
             db, search_req.query,
             skip=(search_req.page - 1) * search_req.page_size,
             limit=search_req.page_size,
+            user_id=current_user.id,
         )
         brief_papers = [
             schemas.PaperBrief.model_validate(p) for p in papers
@@ -455,17 +580,20 @@ async def search_papers(
     db_papers = crud.get_papers_by_ids(db, paper_ids)
     paper_map = {p.id: p for p in db_papers}
 
-    # 按算法层排序保持顺序，分页
+    # 按算法层相关性顺序，剔除对当前用户不可见的论文（他人私有上传），再分页
+    visible_ordered = [
+        paper_map[pid]
+        for pid in paper_ids
+        if pid in paper_map and crud.paper_visible_to(paper_map[pid], current_user.id)
+    ]
+    total = len(visible_ordered)
     start = (search_req.page - 1) * search_req.page_size
     end = start + search_req.page_size
-    paged_ids = paper_ids[start:end]
+    brief_papers = [
+        schemas.PaperBrief.model_validate(p) for p in visible_ordered[start:end]
+    ]
 
-    brief_papers = []
-    for pid in paged_ids:
-        if pid in paper_map:
-            brief_papers.append(schemas.PaperBrief.model_validate(paper_map[pid]))
-
-    return schemas.SearchResponse(total=len(paper_ids), papers=brief_papers)
+    return schemas.SearchResponse(total=total, papers=brief_papers)
 
 
 @app.post("/click")
@@ -511,8 +639,9 @@ async def get_recommendations(
 
     papers = []
     for pid in recommended_ids:
-        if pid in paper_map:
-            papers.append(schemas.PaperBrief.model_validate(paper_map[pid]))
+        p = paper_map.get(pid)
+        if p and crud.paper_visible_to(p, current_user.id):
+            papers.append(schemas.PaperBrief.model_validate(p))
 
     return schemas.RecommendResponse(papers=papers)
 
@@ -537,6 +666,8 @@ async def get_paper_pdf(
 ):
     paper = crud.get_paper(db, paper_id)
     if not paper:
+        raise HTTPException(status_code=404, detail="Paper not found")
+    if not crud.paper_visible_to(paper, current_user.id):
         raise HTTPException(status_code=404, detail="Paper not found")
     pdf_path = PDF_STORE / f"{paper_id}.pdf"
     if not pdf_path.is_file():

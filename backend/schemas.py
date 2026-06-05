@@ -64,6 +64,7 @@ class PaperCreate(PaperBase):
 class Paper(PaperBase):
     id: int
     has_pdf: bool = False
+    owner_id: Optional[int] = None
     created_at: Optional[datetime] = None
 
     class Config:
@@ -79,9 +80,40 @@ class PaperBrief(BaseModel):
     keywords: str
     url: str = ""
     has_pdf: bool = False
+    owner_id: Optional[int] = None
 
     class Config:
         from_attributes = True
+
+
+# ---- arXiv 上传/导入 ----
+
+
+class ArxivPreviewRequest(BaseModel):
+    url: str
+
+
+class ArxivPreview(BaseModel):
+    arxiv_id: str
+    title: str = ""
+    abstract: str = ""
+    authors: str = ""
+    venue: str = "arXiv"
+    year: int = 0
+    keywords: str = ""
+    url: str = ""
+    source: str = "none"  # openalex | none —— 提示元数据是否成功提取
+
+
+class ArxivImportRequest(BaseModel):
+    arxiv_id: str
+    title: str
+    abstract: str = ""
+    authors: str = ""
+    venue: str = "arXiv"
+    year: int = 0
+    keywords: str = ""
+    url: str = ""
 
 
 class PaperList(BaseModel):

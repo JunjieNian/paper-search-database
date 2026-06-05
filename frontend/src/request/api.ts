@@ -154,6 +154,7 @@ interface PaperBrief {
     keywords: string
     url: string
     has_pdf: boolean
+    owner_id?: number | null
 }
 
 interface PaperDetail {
@@ -211,3 +212,45 @@ export const GetRecommendations = (): Promise<RecommendRes> =>
 
 export const GetSearchHistory = (): Promise<SearchHistoryRes> =>
     instance.get(`/api/search/history`);
+
+// ---- 用户论文上传（arXiv 链接导入）----
+
+export interface ArxivPreview {
+    arxiv_id: string
+    title: string
+    abstract: string
+    authors: string
+    venue: string
+    year: number
+    keywords: string
+    url: string
+    source: string // 'openalex' | 'none'
+}
+
+export interface ArxivImportPayload {
+    arxiv_id: string
+    title: string
+    abstract: string
+    authors: string
+    venue: string
+    year: number
+    keywords: string
+    url: string
+}
+
+interface MyPapersRes {
+    total: number
+    papers: PaperDetail[]
+}
+
+export const PreviewArxiv = (url: string): Promise<ArxivPreview> =>
+    instance.post(`/api/papers/preview-arxiv`, {url});
+
+export const ImportArxiv = (payload: ArxivImportPayload): Promise<PaperDetail> =>
+    instance.post(`/api/papers/import-arxiv`, payload);
+
+export const GetMyPapers = (): Promise<MyPapersRes> =>
+    instance.get(`/api/papers/mine`);
+
+export const DeletePaper = (paperId: number): Promise<any> =>
+    instance.delete(`/api/papers/${paperId}`);

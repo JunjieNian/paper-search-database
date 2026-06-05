@@ -107,3 +107,12 @@ class ChunkSearchResult(BaseModel):
 
 class ChunkSearchResponse(BaseModel):
     results: List[ChunkSearchResult]
+
+
+class DeletePaperRequest(BaseModel):
+    paper_id: int
+
+
+class DeletePaperResponse(BaseModel):
+    paper_removed: bool
+    chunks_removed: bool
